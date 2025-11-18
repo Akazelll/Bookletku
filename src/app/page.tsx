@@ -2,8 +2,28 @@ import { ModeToggle } from "@/components/mode-toggle";
 import MenuBuilder from "@/components/menu-builder";
 import ShareMenu from "@/components/share-menu";
 import MenuSettings from "@/components/menu-settings";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { MenuItem } from "@/types/menu";
 
-export default function AdminDashboard() {
+// Revalidate data setiap saat halaman dibuka (Dynamic Rendering)
+export const dynamic = "force-dynamic";
+
+export default async function AdminDashboard() {
+  let initialMenus: MenuItem[] = [];
+
+  try {
+    // Fetch Data di Server agar Admin Dashboard cepat terbuka
+    const q = query(collection(db, "menus"), orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+    initialMenus = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as MenuItem[];
+  } catch (error) {
+    console.error("Failed to fetch menus on server:", error);
+  }
+
   return (
     <div className='flex min-h-screen w-full flex-col bg-zinc-50/50 dark:bg-black font-sans'>
       {/* Navbar */}
@@ -37,9 +57,9 @@ export default function AdminDashboard() {
         </div>
 
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-8 items-start'>
-          {/* Kolom Kiri: Menu Builder */}
+          {/* Kolom Kiri: Menu Builder dengan Data Awal */}
           <div className='lg:col-span-2'>
-            <MenuBuilder />
+            <MenuBuilder initialMenus={initialMenus} />
           </div>
 
           {/* Kolom Kanan: Settings & Share */}

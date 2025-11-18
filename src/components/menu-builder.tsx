@@ -1,24 +1,79 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { db, storage } from "@/lib/firebase"; // Import storage
+import Image from "next/image";
+import { db, storage } from "@/lib/firebase";
 import {
   collection,
   addDoc,
-  getDocs,
   deleteDoc,
+  updateDoc,
   doc,
-  orderBy,
-  query,
 } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"; // Fungsi storage
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { MenuItem, CATEGORIES } from "@/types/menu";
 import { Button } from "@/components/ui/button";
-import { Trash2, Plus, Loader2, ImagePlus, X } from "lucide-react";
+import {
+  Trash2,
+  Plus,
+  Loader2,
+  ImagePlus,
+  X,
+  Pencil,
+  CloudUpload,
+} from "lucide-react";
 
-export default function MenuBuilder() {
-  const [menus, setMenus] = useState<MenuItem[]>([]);
-  const [loading, setLoading] = useState(true);
+// Tipe tambahan untuk handle status upload lokal
+interface OptimisticMenuItem extends MenuItem {
+  isPending?: boolean; // Penanda item sedang di-upload background
+  tempId?: string; // ID sementara sebelum dapat ID asli dari Firebase
+}
+
+const compressImage = (file: File): Promise<File> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = document.createElement("img");
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 800;
+        const scaleSize = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scaleSize;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(
+                new File([blob], file.name, {
+                  type: "image/jpeg",
+                  lastModified: Date.now(),
+                })
+              );
+            } else {
+              resolve(file);
+            }
+          },
+          "image/jpeg",
+          0.7
+        );
+      };
+    };
+  });
+};
+
+interface MenuBuilderProps {
+  initialMenus?: MenuItem[];
+}
+
+export default function MenuBuilder({ initialMenus = [] }: MenuBuilderProps) {
+  const [menus, setMenus] = useState<OptimisticMenuItem[]>(initialMenus);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+
   const [formData, setFormData] = useState<
     Omit<MenuItem, "id" | "createdAt" | "isAvailable">
   >({
@@ -28,121 +83,217 @@ export default function MenuBuilder() {
     category: CATEGORIES[0],
     imageUrl: "",
   });
-
-  // State khusus untuk file gambar
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 1. READ: Ambil Data
-  useEffect(() => {
-    fetchMenus();
-  }, []);
-
-  const fetchMenus = async () => {
-    setLoading(true);
-    try {
-      if (!db) return;
-      const q = query(collection(db, "menus"), orderBy("createdAt", "desc"));
-      const querySnapshot = await getDocs(q);
-      const menuData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as MenuItem[];
-      setMenus(menuData);
-    } catch (error) {
-      console.error("Error fetching menus:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle Pilih Gambar
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setImageFile(file);
-      setImagePreview(URL.createObjectURL(file)); // Preview lokal
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
-  // 2. CREATE: Upload Gambar & Simpan Data
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  const handleEdit = (menu: MenuItem) => {
+    setIsEditing(true);
+    setEditId(menu.id!);
+    setFormData({
+      name: menu.name,
+      description: menu.description,
+      price: menu.price,
+      category: menu.category,
+      imageUrl: menu.imageUrl || "",
+    });
+    setImagePreview(menu.imageUrl || null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
+  const resetForm = () => {
+    setIsEditing(false);
+    setEditId(null);
+    setFormData({
+      name: "",
+      description: "",
+      price: 0,
+      category: CATEGORIES[0],
+      imageUrl: "",
+    });
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
+  // --- FUNGSI BACKGROUND UPLOAD (RAHASIA KECEPATAN) ---
+  const processBackgroundSave = async (
+    tempData: OptimisticMenuItem,
+    file: File | null,
+    mode: "create" | "update",
+    targetId?: string
+  ) => {
     try {
-      let downloadURL = "";
+      let downloadURL = tempData.imageUrl || "";
 
-      // A. Upload ke Firebase Storage (jika ada gambar)
-      if (imageFile && storage) {
+      // 1. Upload di Background
+      if (file && storage) {
+        const compressedFile = await compressImage(file);
         const storageRef = ref(
           storage,
-          `menus/${Date.now()}_${imageFile.name}`
+          `menus/${Date.now()}_${compressedFile.name}`
         );
-        const snapshot = await uploadBytes(storageRef, imageFile);
+        const snapshot = await uploadBytes(storageRef, compressedFile);
         downloadURL = await getDownloadURL(snapshot.ref);
       }
 
-      // B. Simpan Metadata ke Firestore
-      if (db) {
-        await addDoc(collection(db, "menus"), {
-          ...formData,
-          imageUrl: downloadURL, // Link gambar dari storage
-          isAvailable: true,
-          createdAt: Date.now(),
-        });
-      }
+      if (!db) return;
 
-      // C. Reset Form
-      setFormData({
-        name: "",
-        description: "",
-        price: 0,
-        category: CATEGORIES[0],
-        imageUrl: "",
-      });
-      setImageFile(null);
-      setImagePreview(null);
-      fetchMenus(); // Refresh list
-      alert("Menu berhasil ditambahkan!");
+      if (mode === "create") {
+        // 2. Simpan ke DB
+        const docRef = await addDoc(collection(db, "menus"), {
+          name: tempData.name,
+          description: tempData.description,
+          price: tempData.price,
+          category: tempData.category,
+          imageUrl: downloadURL,
+          isAvailable: true,
+          createdAt: tempData.createdAt,
+        });
+
+        // 3. Update UI: Ganti item "Temp" dengan item "Asli" (Ada ID Database)
+        setMenus((prev) =>
+          prev.map((m) =>
+            m.tempId === tempData.tempId
+              ? { ...m, id: docRef.id, imageUrl: downloadURL, isPending: false } // Hapus flag pending
+              : m
+          )
+        );
+      } else if (mode === "update" && targetId) {
+        const menuRef = doc(db, "menus", targetId);
+        await updateDoc(menuRef, {
+          ...formData,
+          name: tempData.name,
+          description: tempData.description,
+          price: tempData.price,
+          category: tempData.category,
+          imageUrl: downloadURL,
+        });
+
+        // Update UI: Matikan flag pending
+        setMenus((prev) =>
+          prev.map((m) =>
+            m.id === targetId
+              ? { ...m, imageUrl: downloadURL, isPending: false }
+              : m
+          )
+        );
+      }
     } catch (error) {
-      console.error("Error adding document: ", error);
-      alert("Gagal menambah menu. Pastikan koneksi internet lancar.");
-    } finally {
-      setIsSubmitting(false);
+      console.error("Background sync failed:", error);
+      alert("Gagal menyimpan data ke server. Cek koneksi internet Anda.");
+      // Rollback jika create gagal
+      if (mode === "create") {
+        setMenus((prev) => prev.filter((m) => m.tempId !== tempData.tempId));
+      }
     }
   };
 
-  // 3. DELETE
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const timestamp = Date.now();
+    const tempId = `temp_${timestamp}`; // ID sementara
+    const localImageUrl = imagePreview || formData.imageUrl;
+
+    if (isEditing && editId) {
+      // --- OPTIMISTIC UPDATE ---
+      // 1. Update UI Langsung
+      setMenus((prev) =>
+        prev.map((m) =>
+          m.id === editId
+            ? {
+                ...m,
+                ...formData,
+                imageUrl: localImageUrl || "",
+                isPending: true,
+              }
+            : m
+        )
+      );
+
+      // 2. Jalan di Background
+      processBackgroundSave(
+        { ...formData, createdAt: timestamp } as OptimisticMenuItem,
+        imageFile,
+        "update",
+        editId
+      );
+    } else {
+      // --- OPTIMISTIC CREATE ---
+      const newItem: OptimisticMenuItem = {
+        id: tempId, // Pakai ID sementara dulu
+        tempId: tempId,
+        ...formData,
+        imageUrl: localImageUrl || "",
+        isAvailable: true,
+        createdAt: timestamp,
+        isPending: true, // Tandai sedang loading
+      };
+
+      // 1. Tampil Langsung! (0 Detik)
+      setMenus((prev) => [newItem, ...prev]);
+
+      // 2. Jalan di Background
+      processBackgroundSave(newItem, imageFile, "create");
+    }
+
+    // 3. Reset Form Langsung
+    resetForm();
+  };
+
   const handleDelete = async (id: string) => {
-    if (!confirm("Yakin ingin menghapus menu ini?")) return;
+    if (!confirm("Hapus menu ini?")) return;
+    const oldMenus = [...menus];
+    setMenus(menus.filter((m) => m.id !== id)); // Optimistic delete
+
     try {
-      if (db) {
-        await deleteDoc(doc(db, "menus", id));
-        setMenus(menus.filter((m) => m.id !== id));
-      }
+      if (db) await deleteDoc(doc(db, "menus", id));
     } catch (error) {
-      console.error("Error deleting document: ", error);
+      console.error("Delete error:", error);
+      setMenus(oldMenus);
+      alert("Gagal menghapus (Offline/Error).");
     }
   };
 
   return (
     <div className='grid grid-cols-1 xl:grid-cols-2 gap-8'>
-      {/* --- FORM INPUT --- */}
-      <div className='bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm h-fit'>
-        <h3 className='text-lg font-bold mb-6 flex items-center gap-2 text-zinc-900 dark:text-zinc-100'>
-          <Plus className='w-5 h-5' /> Tambah Menu Baru
-        </h3>
+      {/* FORM INPUT */}
+      <div className='bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm h-fit sticky top-24'>
+        <div className='flex justify-between items-center mb-6'>
+          <h3 className='text-lg font-bold flex items-center gap-2 text-zinc-900 dark:text-zinc-100'>
+            {isEditing ? (
+              <Pencil className='w-5 h-5' />
+            ) : (
+              <Plus className='w-5 h-5' />
+            )}
+            {isEditing ? "Edit Menu" : "Tambah Menu Baru"}
+          </h3>
+          {isEditing && (
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={resetForm}
+              className='text-red-500'
+            >
+              Batal
+            </Button>
+          )}
+        </div>
 
         <form onSubmit={handleSubmit} className='space-y-5'>
-          {/* Upload Area */}
           <div className='space-y-2'>
             <label className='text-sm font-medium text-zinc-700 dark:text-zinc-300'>
               Foto Makanan
             </label>
             <div className='flex items-center gap-4'>
-              <div className='relative w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 flex items-center justify-center overflow-hidden group'>
+              <div className='relative w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-xl border-2 border-dashed border-zinc-300 flex items-center justify-center overflow-hidden'>
                 {imagePreview ? (
                   <>
                     <img
@@ -155,8 +306,9 @@ export default function MenuBuilder() {
                       onClick={() => {
                         setImageFile(null);
                         setImagePreview(null);
+                        setFormData({ ...formData, imageUrl: "" });
                       }}
-                      className='absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'
+                      className='absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity'
                     >
                       <X className='w-6 h-6 text-white' />
                     </button>
@@ -170,7 +322,7 @@ export default function MenuBuilder() {
                   type='file'
                   accept='image/*'
                   onChange={handleImageChange}
-                  className='block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 dark:file:bg-zinc-800 file:text-zinc-700 dark:file:text-zinc-300 hover:file:bg-zinc-200 transition-colors'
+                  className='block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 hover:file:bg-zinc-200 transition-colors'
                 />
                 <p className='text-xs text-zinc-400 mt-2'>
                   Format: JPG, PNG (Max 2MB)
@@ -179,33 +331,32 @@ export default function MenuBuilder() {
             </div>
           </div>
 
-          {/* Input Text */}
           <div>
-            <label className='block text-sm font-medium mb-1.5 text-zinc-700 dark:text-zinc-300'>
+            <label className='block text-sm font-medium mb-1.5'>
               Nama Menu
             </label>
             <input
               type='text'
               required
-              className='w-full p-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 focus:ring-2 focus:ring-black/10 outline-none transition-all'
+              className='w-full p-2.5 rounded-lg border border-zinc-300 bg-white dark:bg-zinc-950 focus:ring-2 focus:ring-black/10 outline-none'
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              placeholder='Contoh: Nasi Goreng Spesial'
+              placeholder='Contoh: Nasi Goreng'
             />
           </div>
 
           <div className='grid grid-cols-2 gap-4'>
             <div>
-              <label className='block text-sm font-medium mb-1.5 text-zinc-700 dark:text-zinc-300'>
+              <label className='block text-sm font-medium mb-1.5'>
                 Harga (Rp)
               </label>
               <input
                 type='number'
                 required
                 min='0'
-                className='w-full p-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 focus:ring-2 focus:ring-black/10 outline-none transition-all'
+                className='w-full p-2.5 rounded-lg border border-zinc-300 bg-white dark:bg-zinc-950 outline-none'
                 value={formData.price || ""}
                 onChange={(e) =>
                   setFormData({ ...formData, price: Number(e.target.value) })
@@ -214,11 +365,11 @@ export default function MenuBuilder() {
               />
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1.5 text-zinc-700 dark:text-zinc-300'>
+              <label className='block text-sm font-medium mb-1.5'>
                 Kategori
               </label>
               <select
-                className='w-full p-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 focus:ring-2 focus:ring-black/10 outline-none transition-all appearance-none'
+                className='w-full p-2.5 rounded-lg border border-zinc-300 bg-white dark:bg-zinc-950 outline-none'
                 value={formData.category}
                 onChange={(e) =>
                   setFormData({ ...formData, category: e.target.value })
@@ -234,60 +385,62 @@ export default function MenuBuilder() {
           </div>
 
           <div>
-            <label className='block text-sm font-medium mb-1.5 text-zinc-700 dark:text-zinc-300'>
+            <label className='block text-sm font-medium mb-1.5'>
               Deskripsi
             </label>
             <textarea
-              className='w-full p-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 focus:ring-2 focus:ring-black/10 outline-none min-h-[100px] transition-all'
+              className='w-full p-2.5 rounded-lg border border-zinc-300 bg-white dark:bg-zinc-950 outline-none min-h-[100px]'
               rows={3}
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              placeholder='Jelaskan rasa, bahan utama, atau porsi...'
+              placeholder='Penjelasan menu...'
             />
           </div>
 
           <Button
             type='submit'
-            disabled={isSubmitting}
-            className='w-full bg-black hover:bg-zinc-800 text-white dark:bg-white dark:text-black dark:hover:bg-zinc-200 h-11 rounded-xl font-semibold'
+            className='w-full bg-black text-white hover:bg-zinc-800 h-11 rounded-xl font-semibold'
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className='animate-spin mr-2 h-4 w-4' /> Menyimpan...
-              </>
-            ) : (
-              <>Simpan Menu</>
-            )}
+            {isEditing ? "Simpan Perubahan" : "Tambah Menu (Instan)"}
           </Button>
         </form>
       </div>
 
-      {/* --- LIST PREVIEW --- */}
+      {/* LIST PREVIEW */}
       <div className='space-y-4'>
         <h3 className='text-lg font-bold mb-4 text-zinc-900 dark:text-zinc-100'>
           Daftar Menu ({menus.length})
         </h3>
-
-        {loading ? (
-          <div className='flex justify-center py-12'>
-            <Loader2 className='animate-spin w-8 h-8 text-zinc-400' />
-          </div>
-        ) : menus.length === 0 ? (
-          <div className='text-center py-12 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-400'>
-            <p>Belum ada menu yang ditambahkan.</p>
+        {menus.length === 0 ? (
+          <div className='text-center py-12 border-2 border-dashed border-zinc-200 rounded-xl text-zinc-400'>
+            <p>Belum ada menu.</p>
           </div>
         ) : (
           <div className='grid gap-4 max-h-[800px] overflow-y-auto pr-2 scrollbar-hide'>
             {menus.map((menu) => (
               <div
                 key={menu.id}
-                className='flex items-start gap-4 p-4 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm group hover:border-zinc-300 transition-all'
+                className={`relative flex items-start gap-4 p-4 bg-white dark:bg-zinc-900 rounded-xl border shadow-sm transition-all ${
+                  menu.isPending
+                    ? "opacity-70 border-blue-200 bg-blue-50/30"
+                    : "border-zinc-200"
+                } ${
+                  editId === menu.id ? "border-black ring-1 ring-black" : ""
+                }`}
               >
-                {/* Thumbnail */}
-                <div className='w-20 h-20 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex-shrink-0 overflow-hidden border border-zinc-100 dark:border-zinc-700 relative'>
+                {/* Indikator Uploading */}
+                {menu.isPending && (
+                  <div className='absolute top-2 right-2 flex items-center gap-1 text-[10px] font-bold text-blue-500 bg-blue-100 px-2 py-1 rounded-full z-10'>
+                    <CloudUpload className='w-3 h-3 animate-bounce' />
+                    Menyimpan...
+                  </div>
+                )}
+
+                <div className='w-20 h-20 bg-zinc-100 rounded-lg flex-shrink-0 overflow-hidden border border-zinc-100 relative'>
                   {menu.imageUrl ? (
+                    // Gunakan <img> biasa untuk blob lokal agar preview instan (Next Image kadang butuh prop src yang valid server-side)
                     <img
                       src={menu.imageUrl}
                       alt={menu.name}
@@ -299,30 +452,41 @@ export default function MenuBuilder() {
                     </div>
                   )}
                 </div>
-
                 <div className='flex-1 min-w-0'>
                   <div className='flex justify-between items-start'>
                     <div>
                       <h4 className='font-bold text-zinc-900 dark:text-zinc-100 truncate text-base'>
                         {menu.name}
                       </h4>
-                      <span className='inline-block px-2 py-0.5 text-[10px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-full mb-1 mt-1'>
+                      <span className='inline-block px-2 py-0.5 text-[10px] font-medium bg-zinc-100 text-zinc-600 rounded-full mb-1 mt-1'>
                         {menu.category}
                       </span>
                     </div>
-                    <Button
-                      variant='ghost'
-                      size='icon'
-                      onClick={() => handleDelete(menu.id!)}
-                      className='h-8 w-8 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 -mt-1 -mr-1'
-                    >
-                      <Trash2 className='h-4 w-4' />
-                    </Button>
+                    <div className='flex gap-1 -mr-2 -mt-2'>
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        disabled={menu.isPending}
+                        onClick={() => handleEdit(menu)}
+                        className='h-8 w-8 text-zinc-400 hover:text-blue-600'
+                      >
+                        <Pencil className='h-4 w-4' />
+                      </Button>
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        disabled={menu.isPending}
+                        onClick={() => handleDelete(menu.id!)}
+                        className='h-8 w-8 text-zinc-400 hover:text-red-600'
+                      >
+                        <Trash2 className='h-4 w-4' />
+                      </Button>
+                    </div>
                   </div>
-                  <p className='text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 mt-1 leading-relaxed'>
+                  <p className='text-sm text-zinc-500 line-clamp-2 mt-1'>
                     {menu.description}
                   </p>
-                  <p className='text-sm font-bold mt-2 text-zinc-900 dark:text-zinc-100'>
+                  <p className='text-sm font-bold mt-2 text-zinc-900'>
                     Rp {menu.price.toLocaleString("id-ID")}
                   </p>
                 </div>

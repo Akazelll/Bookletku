@@ -10,32 +10,30 @@ import {
 import { MenuItem } from "@/types/menu";
 import MenuPublic from "@/components/menu-public";
 
-// Revalidate data setiap 60 detik (ISR)
-export const revalidate = 60;
+// --- PERBAIKAN UTAMA DI SINI ---
+// Gunakan "force-dynamic" agar halaman tidak di-cache.
+// Ini memaksa server mengambil data terbaru setiap kali halaman dibuka.
+export const dynamic = "force-dynamic";
 
 export default async function MenuPage() {
   let menus: MenuItem[] = [];
   let theme = "minimalist";
 
   try {
+    console.log("🔍 [Server] Sedang mengambil data menu...");
+
     // 1. Ambil Data Menu
-    // Gunakan timeout race agar tidak hanging selamanya jika offline
-    const menuDataPromise = (async () => {
-      const menusRef = collection(db, "menus");
-      const q = query(menusRef, orderBy("createdAt", "desc"));
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as MenuItem[];
-    })();
+    // Kita tidak butuh timeout rumit jika koneksi database sudah benar
+    const menusRef = collection(db, "menus");
+    const q = query(menusRef, orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
 
-    // Batasi waktu tunggu server maks 5 detik
-    const timeoutPromise = new Promise<MenuItem[]>((_, reject) =>
-      setTimeout(() => reject(new Error("Timeout")), 5000)
-    );
+    menus = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as MenuItem[];
 
-    menus = await Promise.race([menuDataPromise, timeoutPromise]);
+    console.log(`✅ [Server] Berhasil mendapatkan ${menus.length} item menu.`);
 
     // 2. Ambil Setting Tema
     try {
@@ -45,12 +43,15 @@ export default async function MenuPage() {
         theme = settingsSnap.data().theme || "minimalist";
       }
     } catch (e) {
-      console.warn("Gagal load theme, pakai default.");
+      // Error tema tidak fatal, abaikan saja
+      console.warn("Info: Menggunakan tema default.");
     }
-  } catch (error) {
-    console.error("⚠️ Gagal mengambil menu di server (Offline/Error):", error);
-    // Kita biarkan menus kosong [], jadi halaman tetap tampil (kosong)
-    // daripada error 500 "Runtime Error".
+  } catch (error: any) {
+    console.error("❌ [CRITICAL ERROR] Gagal mengambil data:", error);
+    // Jika error code masih 'not-found', berarti firebase.ts belum ter-reload sempurna
+    if (error.code === "not-found") {
+      console.error("Solusi: Matikan server (Ctrl+C) lalu nyalakan lagi.");
+    }
   }
 
   // 3. Render Client Component

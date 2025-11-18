@@ -11,6 +11,7 @@ interface MenuFormProps {
   isEditing: boolean;
   onSubmit: (data: any, file: File | null) => void;
   onCancel: () => void;
+  isSubmitting?: boolean;
 }
 
 export default function MenuForm({
@@ -18,6 +19,7 @@ export default function MenuForm({
   isEditing,
   onSubmit,
   onCancel,
+  isSubmitting,
 }: MenuFormProps) {
   const [formData, setFormData] = useState({
     name: "",
@@ -85,7 +87,7 @@ export default function MenuForm({
           ) : (
             <Plus className='w-5 h-5' />
           )}
-          {isEditing ? "Edit Menu" : "Tambah Menu Baru"}
+          {isEditing ? "Edit Menu" : "Tambah Menu"}
         </h3>
         {isEditing && (
           <Button
@@ -134,7 +136,9 @@ export default function MenuForm({
                 onChange={handleImageChange}
                 className='block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-zinc-100 hover:file:bg-zinc-200 transition-colors'
               />
-              <p className='text-xs text-zinc-400 mt-2'>JPG/PNG (Max 600px)</p>
+              <p className='text-xs text-zinc-400 mt-2'>
+                JPG/PNG (Otomatis Kompres)
+              </p>
             </div>
           </div>
         </div>
@@ -187,9 +191,14 @@ export default function MenuForm({
 
         <Button
           type='submit'
+          disabled={isSubmitting}
           className='w-full bg-black text-white hover:bg-zinc-800 h-11 rounded-xl font-semibold'
         >
-          {isEditing ? "Simpan Perubahan" : "Tambah Menu (Instan)"}
+          {isSubmitting
+            ? "Menyimpan..."
+            : isEditing
+            ? "Simpan Perubahan"
+            : "Tambah Menu"}
         </Button>
       </form>
     </div>

@@ -1,4 +1,3 @@
-// src/services/menu-service.ts
 import { db, storage } from "@/lib/firebase";
 import {
   collection,
@@ -11,61 +10,61 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { MenuItem } from "@/types/menu";
 import { compressImage } from "@/lib/image-utils";
 
+// FUNGSI TIMEOUT: Batasi waktu tunggu maksimal 10 detik
+// Jika lewat 10 detik, kita anggap gagal dan munculkan error
+const withTimeout = <T>(promise: Promise<T>, ms = 10000) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(
+        () =>
+          reject(
+            new Error("TIMEOUT: Database tidak merespon. Cek koneksi/Rules.")
+          ),
+        ms
+      )
+    ),
+  ]) as Promise<T>;
+};
+
 export const MenuService = {
   async uploadImage(file: File): Promise<string> {
-    console.log("🚀 Upload dimulai...");
-    if (!storage) throw new Error("Storage belum siap.");
+    if (!storage) throw new Error("Storage error.");
 
-    try {
-      // 1. Kompres
-      console.log("🖼️ Mengompres gambar...");
-      const compressedFile = await compressImage(file);
+    // Kompres & Upload
+    const compressedFile = await compressImage(file);
+    // Bersihkan nama file dari karakter aneh
+    const cleanName = compressedFile.name.replace(/[^a-zA-Z0-9.]/g, "_");
+    const storageRef = ref(storage, `menus/${Date.now()}_${cleanName}`);
 
-      // 2. Reference
-      const fileName = `menus/${Date.now()}_${compressedFile.name.replace(
-        /\s+/g,
-        "_"
-      )}`; // Hapus spasi di nama file
-      const storageRef = ref(storage, fileName);
-
-      // 3. Upload
-      console.log(`⬆️ Mengupload ke: ${fileName}`);
-      const snapshot = await uploadBytes(storageRef, compressedFile);
-      console.log("✅ Upload file sukses, mengambil URL...");
-
-      // 4. Get URL
-      const url = await getDownloadURL(snapshot.ref);
-      console.log("🔗 URL didapat:", url);
-      return url;
-    } catch (error: any) {
-      console.error("❌ Upload Gagal:", error);
-      // Deteksi error spesifik
-      if (error.code === "storage/unauthorized") {
-        throw new Error("Izin ditolak. Cek Rules Storage di Firebase Console.");
-      } else if (error.code === "storage/retry-limit-exceeded") {
-        throw new Error("Koneksi lambat/putus. Gagal upload.");
-      } else if (error.code === "storage/canceled") {
-        throw new Error("Upload dibatalkan.");
-      }
-      throw error;
-    }
+    // Upload (Kasih waktu agak lama buat gambar: 30 detik)
+    const snapshot = await withTimeout(
+      uploadBytes(storageRef, compressedFile),
+      30000
+    );
+    return await getDownloadURL(snapshot.ref);
   },
 
   async add(menu: Omit<MenuItem, "id">) {
-    if (!db) throw new Error("Koneksi Database terputus.");
-    const cleanData = JSON.parse(JSON.stringify(menu)); // Hapus undefined
-    return await addDoc(collection(db, "menus"), cleanData);
+    if (!db) throw new Error("Database belum terhubung.");
+
+    // Hapus field undefined
+    const cleanData = JSON.parse(JSON.stringify(menu));
+
+    console.log("💾 Mencoba menyimpan ke Firestore...");
+    // Simpan dengan timeout 10 detik
+    return await withTimeout(addDoc(collection(db, "menus"), cleanData));
   },
 
   async update(id: string, data: Partial<MenuItem>) {
-    if (!db) throw new Error("Koneksi Database terputus.");
+    if (!db) throw new Error("Database belum terhubung.");
     const menuRef = doc(db, "menus", id);
     const cleanData = JSON.parse(JSON.stringify(data));
-    await updateDoc(menuRef, cleanData);
+    await withTimeout(updateDoc(menuRef, cleanData));
   },
 
   async delete(id: string) {
-    if (!db) throw new Error("Koneksi Database terputus.");
-    await deleteDoc(doc(db, "menus", id));
+    if (!db) throw new Error("Database belum terhubung.");
+    await withTimeout(deleteDoc(doc(db, "menus", id)));
   },
 };

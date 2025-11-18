@@ -1,4 +1,3 @@
-// src/lib/image-utils.ts
 export const compressImage = (file: File): Promise<File> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -8,7 +7,6 @@ export const compressImage = (file: File): Promise<File> => {
       img.src = event.target?.result as string;
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        // Resolusi max 600px sudah cukup tajam untuk HP, tapi sangat kecil size-nya
         const MAX_WIDTH = 600;
         const scaleSize = MAX_WIDTH / img.width;
         canvas.width = MAX_WIDTH;
@@ -31,7 +29,7 @@ export const compressImage = (file: File): Promise<File> => {
             }
           },
           "image/jpeg",
-          0.6 // Kualitas 60% -> Upload super cepat!
+          0.6
         );
       };
     };

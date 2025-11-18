@@ -16,6 +16,7 @@ export default function MenuBuilder({
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [editItem, setEditItem] = useState<MenuItem | undefined>(undefined);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleEditMode = (menu: MenuItem) => {
     setIsEditing(true);
@@ -31,18 +32,18 @@ export default function MenuBuilder({
   };
 
   const handleSave = async (formData: any, imageFile: File | null) => {
+    setIsSubmitting(true); // Kunci tombol agar user tau sedang proses
     const tempId = `temp_${Date.now()}`;
     const tempImage = imageFile ? URL.createObjectURL(imageFile) : undefined;
 
-    // 1. OPTIMISTIC UPDATE (Update UI duluan)
+    // 1. OPTIMISTIC UPDATE
     const optimisticItem: OptimisticMenuItem = {
       id: isEditing && editId ? editId : tempId,
       ...formData,
       isAvailable: true,
       createdAt: Date.now(),
       isPending: true,
-      tempImage: tempImage,
-      imageUrl: formData.imageUrl, // Pertahankan URL lama jika ada
+      tempImage,
     };
 
     if (isEditing && editId) {
@@ -56,21 +57,16 @@ export default function MenuBuilder({
       setMenus((prev) => [optimisticItem, ...prev]);
     }
 
-    // 2. BACKGROUND PROCESS
+    // 2. BACKGROUND SAVE
     try {
       let finalImageUrl = formData.imageUrl;
-
-      // Hanya upload jika ada file baru
-      if (imageFile) {
-        finalImageUrl = await MenuService.uploadImage(imageFile);
-      }
+      if (imageFile) finalImageUrl = await MenuService.uploadImage(imageFile);
 
       if (isEditing && editId) {
         await MenuService.update(editId, {
           ...formData,
           imageUrl: finalImageUrl,
         });
-        // Sukses update -> Hilangkan status pending & update URL baru
         setMenus((prev) =>
           prev.map((m) =>
             m.id === editId
@@ -84,7 +80,6 @@ export default function MenuBuilder({
           imageUrl: finalImageUrl,
           id: undefined,
         });
-        // Sukses create -> Ganti ID temp dengan ID asli & URL baru
         setMenus((prev) =>
           prev.map((m) =>
             m.id === tempId
@@ -99,32 +94,23 @@ export default function MenuBuilder({
         );
       }
     } catch (error: any) {
-      console.error("Background Save Error:", error);
-      alert(`Gagal menyimpan: ${error.message}`);
-
-      // ROLLBACK (Batalkan perubahan di UI jika gagal)
-      if (!isEditing) {
-        setMenus((prev) => prev.filter((m) => m.id !== tempId));
-      } else if (editId) {
-        // Jika edit gagal, mungkin kita mau me-reload atau biarkan user coba lagi (di sini biarkan saja pending false agar tombol aktif lagi)
-        setMenus((prev) =>
-          prev.map((m) => (m.id === editId ? { ...m, isPending: false } : m))
-        );
-      }
+      console.error("Save Error:", error);
+      alert(`Gagal: ${error.message}`);
+      if (!isEditing) setMenus((prev) => prev.filter((m) => m.id !== tempId)); // Rollback
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Hapus menu ini?")) return;
-    const backupMenus = [...menus];
-    setMenus((prev) => prev.filter((m) => m.id !== id)); // Optimistic Delete
-
+    if (!confirm("Hapus?")) return;
+    const backup = [...menus];
+    setMenus((prev) => prev.filter((m) => m.id !== id));
     try {
       await MenuService.delete(id);
-    } catch (error: any) {
-      console.error(error);
-      setMenus(backupMenus); // Rollback
-      alert(`Gagal menghapus: ${error.message}`);
+    } catch (e) {
+      setMenus(backup);
+      alert("Gagal menghapus.");
     }
   };
 
@@ -139,6 +125,7 @@ export default function MenuBuilder({
           isEditing={isEditing}
           onSubmit={handleSave}
           onCancel={handleCancelEdit}
+          isSubmitting={isSubmitting}
         />
       </div>
       <div>

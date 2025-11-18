@@ -47,7 +47,6 @@ export default function MenuList({
               <CloudUpload className='w-3 h-3 animate-bounce' /> Menyimpan...
             </div>
           )}
-
           <div className='w-20 h-20 bg-zinc-100 rounded-lg flex-shrink-0 overflow-hidden border border-zinc-100 relative'>
             {menu.tempImage || menu.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -62,7 +61,6 @@ export default function MenuList({
               </div>
             )}
           </div>
-
           <div className='flex-1 min-w-0'>
             <div className='flex justify-between items-start'>
               <div>

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image"; // Import Image optimization
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
@@ -29,7 +30,7 @@ export default function PublicMenuPage() {
   useEffect(() => {
     if (analytics) {
       logEvent(analytics, "view_menu_list", {
-        menu_count: menus.length, // (Opsional) catat jumlah menu saat dilihat
+        menu_count: menus.length,
       });
       console.log("Analytics: Menu dilihat!");
     }
@@ -39,7 +40,6 @@ export default function PublicMenuPage() {
   useEffect(() => {
     const fetchMenus = async () => {
       try {
-        // Pengecekan keamanan jika db belum siap
         if (!db) throw new Error("Koneksi database belum siap.");
 
         const q = query(collection(db, "menus"), orderBy("createdAt", "desc"));
@@ -137,7 +137,7 @@ export default function PublicMenuPage() {
         </div>
       </nav>
 
-      {/* --- MAIN LAYOUT (GRID DESKTOP) --- */}
+      {/* --- MAIN LAYOUT --- */}
       <div className='max-w-7xl mx-auto flex flex-col lg:flex-row items-start pt-4 lg:pt-8 gap-8 px-4 sm:px-6 lg:px-8'>
         {/* --- KOLOM KIRI: MENU --- */}
         <div className='flex-1 w-full min-h-[80vh] pb-32 lg:pb-10'>
@@ -187,13 +187,16 @@ export default function PublicMenuPage() {
                   key={menu.id}
                   className='group bg-white rounded-2xl border border-zinc-100 shadow-sm hover:shadow-xl hover:shadow-zinc-200/50 hover:border-zinc-200 transition-all duration-300 overflow-hidden flex flex-row md:flex-col h-32 md:h-auto'
                 >
-                  {/* Gambar Menu */}
+                  {/* Gambar Menu (OPTIMIZED) */}
                   <div className='w-32 md:w-full h-full md:h-48 bg-zinc-100 flex-shrink-0 relative overflow-hidden'>
                     {menu.imageUrl ? (
-                      <img
+                      <Image
                         src={menu.imageUrl}
                         alt={menu.name}
-                        className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-500'
+                        fill
+                        sizes='(max-width: 768px) 30vw, (max-width: 1200px) 50vw, 33vw'
+                        className='object-cover group-hover:scale-105 transition-transform duration-500'
+                        priority={false}
                       />
                     ) : (
                       <div className='w-full h-full flex flex-col items-center justify-center text-zinc-300'>
@@ -203,9 +206,9 @@ export default function PublicMenuPage() {
                         </span>
                       </div>
                     )}
-                    {/* Badge Quantity (Desktop Overlay) */}
+                    {/* Badge Quantity */}
                     {cart[menu.id!] > 0 && (
-                      <div className='hidden md:flex absolute top-3 right-3 bg-black/80 backdrop-blur text-white text-xs font-bold px-2 py-1 rounded-lg shadow-sm animate-in fade-in zoom-in'>
+                      <div className='hidden md:flex absolute top-3 right-3 bg-black/80 backdrop-blur text-white text-xs font-bold px-2 py-1 rounded-lg shadow-sm animate-in fade-in zoom-in z-10'>
                         {cart[menu.id!]}x
                       </div>
                     )}
@@ -227,7 +230,6 @@ export default function PublicMenuPage() {
                         Rp {menu.price.toLocaleString("id-ID")}
                       </span>
 
-                      {/* Controls */}
                       <div className='flex items-center gap-2'>
                         {cart[menu.id!] ? (
                           <>
@@ -265,7 +267,7 @@ export default function PublicMenuPage() {
           )}
         </div>
 
-        {/* --- KOLOM KANAN: SIDEBAR KERANJANG (DESKTOP) --- */}
+        {/* --- SIDEBAR KERANJANG (DESKTOP) --- */}
         <div className='hidden lg:block w-96 flex-shrink-0 sticky top-24 z-10'>
           <div className='bg-white rounded-2xl shadow-xl shadow-zinc-200/50 border border-zinc-100 overflow-hidden flex flex-col max-h-[calc(100vh-120px)]'>
             <div className='p-5 border-b border-zinc-100 bg-white'>
@@ -292,11 +294,14 @@ export default function PublicMenuPage() {
               ) : (
                 cartItemsList.map((item) => (
                   <div key={item.id} className='flex gap-3 group'>
-                    <div className='w-14 h-14 bg-zinc-100 rounded-lg overflow-hidden flex-shrink-0 border border-zinc-100'>
+                    <div className='w-14 h-14 bg-zinc-100 rounded-lg overflow-hidden flex-shrink-0 border border-zinc-100 relative'>
                       {item.imageUrl && (
-                        <img
+                        <Image
                           src={item.imageUrl}
-                          className='w-full h-full object-cover'
+                          alt={item.name}
+                          fill
+                          sizes='56px'
+                          className='object-cover'
                         />
                       )}
                     </div>

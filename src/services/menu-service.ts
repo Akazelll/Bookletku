@@ -1,70 +1,113 @@
-import { db, storage } from "@/lib/firebase";
-import {
-  collection,
-  addDoc,
-  deleteDoc,
-  updateDoc,
-  doc,
-} from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { createClient } from "@/lib/supabase/client";
 import { MenuItem } from "@/types/menu";
-import { compressImage } from "@/lib/image-utils";
 
-// FUNGSI TIMEOUT: Batasi waktu tunggu maksimal 10 detik
-// Jika lewat 10 detik, kita anggap gagal dan munculkan error
-const withTimeout = <T>(promise: Promise<T>, ms = 10000) => {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) =>
-      setTimeout(
-        () =>
-          reject(
-            new Error("TIMEOUT: Database tidak merespon. Cek koneksi/Rules.")
-          ),
-        ms
-      )
-    ),
-  ]) as Promise<T>;
+const supabase = createClient();
+
+// Helper untuk mapping data dari DB (snake_case) ke App (camelCase)
+const mapToMenuItem = (data: any): MenuItem => ({
+  id: data.id,
+  name: data.name,
+  description: data.description,
+  price: data.price,
+  category: data.category, // Asumsi di tabel kolomnya 'category' (text)
+  imageUrl: data.image_url,
+  isAvailable: data.is_available,
+  createdAt: new Date(data.created_at).getTime(),
+});
+
+export const getMenus = async (): Promise<MenuItem[]> => {
+  const { data, error } = await supabase
+    .from("menu_items")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching menus:", error.message);
+    return [];
+  }
+  return data.map(mapToMenuItem);
 };
 
-export const MenuService = {
-  async uploadImage(file: File): Promise<string> {
-    if (!storage) throw new Error("Storage error.");
+export const getMenuById = async (id: string): Promise<MenuItem | null> => {
+  const { data, error } = await supabase
+    .from("menu_items")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-    // Kompres & Upload
-    const compressedFile = await compressImage(file);
-    // Bersihkan nama file dari karakter aneh
-    const cleanName = compressedFile.name.replace(/[^a-zA-Z0-9.]/g, "_");
-    const storageRef = ref(storage, `menus/${Date.now()}_${cleanName}`);
+  if (error || !data) return null;
+  return mapToMenuItem(data);
+};
 
-    // Upload (Kasih waktu agak lama buat gambar: 30 detik)
-    const snapshot = await withTimeout(
-      uploadBytes(storageRef, compressedFile),
-      30000
-    );
-    return await getDownloadURL(snapshot.ref);
-  },
+export const createMenu = async (menu: Partial<MenuItem>) => {
+  // Mapping ke format DB
+  const payload = {
+    name: menu.name,
+    description: menu.description,
+    price: menu.price,
+    category: menu.category,
+    image_url: menu.imageUrl,
+    is_available: menu.isAvailable,
+  };
 
-  async add(menu: Omit<MenuItem, "id">) {
-    if (!db) throw new Error("Database belum terhubung.");
+  const { data, error } = await supabase
+    .from("menu_items")
+    .insert([payload])
+    .select()
+    .single();
 
-    // Hapus field undefined
-    const cleanData = JSON.parse(JSON.stringify(menu));
+  if (error) throw new Error(error.message);
+  return mapToMenuItem(data);
+};
 
-    console.log("💾 Mencoba menyimpan ke Firestore...");
-    // Simpan dengan timeout 10 detik
-    return await withTimeout(addDoc(collection(db, "menus"), cleanData));
-  },
+export const updateMenu = async (id: string, updates: Partial<MenuItem>) => {
+  const payload: any = { ...updates };
+  // Mapping field jika ada update
+  if (updates.imageUrl !== undefined) payload.image_url = updates.imageUrl;
+  if (updates.isAvailable !== undefined)
+    payload.is_available = updates.isAvailable;
+  // Hapus field frontend only agar tidak error di DB
+  delete payload.imageUrl;
+  delete payload.isAvailable;
+  delete payload.createdAt;
+  delete payload.id;
 
-  async update(id: string, data: Partial<MenuItem>) {
-    if (!db) throw new Error("Database belum terhubung.");
-    const menuRef = doc(db, "menus", id);
-    const cleanData = JSON.parse(JSON.stringify(data));
-    await withTimeout(updateDoc(menuRef, cleanData));
-  },
+  const { data, error } = await supabase
+    .from("menu_items")
+    .update(payload)
+    .eq("id", id)
+    .select()
+    .single();
 
-  async delete(id: string) {
-    if (!db) throw new Error("Database belum terhubung.");
-    await withTimeout(deleteDoc(doc(db, "menus", id)));
-  },
+  if (error) throw new Error(error.message);
+  return mapToMenuItem(data);
+};
+
+export const deleteMenu = async (id: string) => {
+  const { error } = await supabase.from("menu_items").delete().eq("id", id);
+
+  if (error) throw new Error(error.message);
+};
+
+export const uploadMenuImage = async (file: File): Promise<string> => {
+  // Validasi file
+  if (!file) throw new Error("No file provided");
+
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${Date.now()}-${Math.random()
+    .toString(36)
+    .substring(7)}.${fileExt}`;
+  const filePath = `menus/${fileName}`;
+
+  // 1. Upload ke Supabase Storage
+  const { error: uploadError } = await supabase.storage
+    .from("menu-images") // Pastikan bucket ini ada di Supabase Storage
+    .upload(filePath, file);
+
+  if (uploadError) throw new Error(uploadError.message);
+
+  // 2. Ambil Public URL
+  const { data } = supabase.storage.from("menu-images").getPublicUrl(filePath);
+
+  return data.publicUrl;
 };

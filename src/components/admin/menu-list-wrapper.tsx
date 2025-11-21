@@ -5,23 +5,31 @@ import MenuList from "./menu-list";
 import { deleteMenu } from "@/services/menu-service";
 import { useRouter } from "next/navigation";
 
+interface MenuListWrapperProps {
+  initialMenus: MenuItem[];
+  viewMode?: "dashboard" | "management";
+}
+
 export default function MenuListWrapper({
   initialMenus,
-}: {
-  initialMenus: MenuItem[];
-}) {
+  viewMode = "management",
+}: MenuListWrapperProps) {
   const router = useRouter();
 
   const handleDelete = async (id: string) => {
-    if (confirm("Yakin ingin menghapus menu ini?")) {
-      try {
-        await deleteMenu(id);
-        router.refresh(); // Refresh data server
-      } catch (error) {
-        alert("Gagal menghapus menu");
-      }
+    try {
+      await deleteMenu(id);
+      router.refresh();
+    } catch (error) {
+      alert("Gagal menghapus menu");
     }
   };
 
-  return <MenuList menus={initialMenus} onDelete={handleDelete} />;
+  return (
+    <MenuList
+      menus={initialMenus}
+      onDelete={handleDelete}
+      viewMode={viewMode}
+    />
+  );
 }

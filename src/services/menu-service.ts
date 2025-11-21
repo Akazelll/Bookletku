@@ -1,6 +1,6 @@
 import { MenuItem } from "@/types/menu";
 
-// DATA DUMMY (Pura-pura dari Database)
+// DATA DUMMY
 let MOCK_MENUS: MenuItem[] = [
   {
     id: "1",
@@ -9,7 +9,7 @@ let MOCK_MENUS: MenuItem[] = [
     price: 25000,
     category: "Makanan Utama",
     imageUrl:
-      "https://images.unsplash.com/photo-1603133872878-684f57df8cca?w=800&q=80", // Gambar random unsplash
+      "https://images.unsplash.com/photo-1603133872878-684f57df8cca?w=800&q=80",
     isAvailable: true,
     createdAt: Date.now(),
   },
@@ -37,16 +37,14 @@ let MOCK_MENUS: MenuItem[] = [
   },
 ];
 
-// --- FUNGSI-FUNGSI SERVICE (MOCK VERSION) ---
+// --- FUNGSI SERVICE (TANPA DELAY) ---
 
 export const getMenus = async (): Promise<MenuItem[]> => {
-  // Simulasi delay network
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  // HAPUS TIMEOUT DI SINI AGAR INSTAN
   return MOCK_MENUS;
 };
 
 export const getMenuById = async (id: string): Promise<MenuItem | null> => {
-  await new Promise((resolve) => setTimeout(resolve, 300));
   return MOCK_MENUS.find((m) => m.id === id) || null;
 };
 
@@ -74,6 +72,5 @@ export const deleteMenu = async (id: string) => {
 };
 
 export const uploadMenuImage = async (file: File): Promise<string> => {
-  // Return dummy image karena kita belum connect storage
   return "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80";
 };

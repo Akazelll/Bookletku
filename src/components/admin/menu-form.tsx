@@ -17,7 +17,7 @@ import {
 interface MenuFormProps {
   initialData?: MenuItem;
   isEditing?: boolean;
-  onSuccess?: () => void; // Prop baru untuk menutup dialog
+  onSuccess?: () => void;
 }
 
 export default function MenuForm({
@@ -27,6 +27,7 @@ export default function MenuForm({
 }: MenuFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+
   const [formData, setFormData] = useState<Partial<MenuItem>>(
     initialData || {
       name: "",
@@ -71,16 +72,12 @@ export default function MenuForm({
 
       router.refresh();
 
-      // Jika ada prop onSuccess (dari dialog), panggil function tsb
       if (onSuccess) {
         onSuccess();
-      } else {
-        // Fallback jika dipakai di halaman biasa
-        router.push("/admin/dashboard");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving menu:", error);
-      alert("Gagal menyimpan menu.");
+      alert(`Gagal menyimpan: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -88,7 +85,7 @@ export default function MenuForm({
 
   return (
     <form onSubmit={handleSubmit} className='space-y-6'>
-      {/* Image Upload Area */}
+      {/* Image Upload */}
       <div className='space-y-2'>
         <Label>Foto Menu</Label>
         <div className='flex gap-4 items-center'>

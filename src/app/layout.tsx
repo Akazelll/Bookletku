@@ -1,19 +1,16 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google"; // Font Anda sudah pas
+import { Geist } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 
 const geistSans = Geist({
-  variable: "--font-sans", // Ganti nama variabel agar sesuai shadcn
+  variable: "--font-sans",
   subsets: ["latin"],
 });
 
-// (File Anda menggunakan Geist_Mono, tapi --font-mono biasanya tidak diperlukan shadcn)
-// const geistMono = Geist_Mono...
-
 export const metadata: Metadata = {
-  title: "Bookletku - Admin", // Ganti judul
+  title: "Bookletku - Admin",
   description: "Self-service digital menu builder",
 };
 
@@ -37,6 +34,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          {/* Toaster dihapus */}
         </ThemeProvider>
       </body>
     </html>

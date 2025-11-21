@@ -1,21 +1,33 @@
-// src/app/(admin)/dashboard/page.tsx
 import Link from "next/link";
-import { getMenus, deleteMenu } from "@/services/menu-service"; // Import server action/service
+import { createClient } from "@/lib/supabase/server"; // Gunakan Server Client
+import { deleteMenu } from "@/services/menu-service"; // Import action delete
 import { Button } from "@/components/ui/button";
-import ShareMenu from "@/components/share-menu"; // Komponen QR yang sudah ada
+import ShareMenu from "@/components/share-menu";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { revalidatePath } from "next/cache";
-
-// Action untuk handle delete di server component (opsional, bisa juga pakai client component)
-async function handleDelete(id: string) {
-  "useuse server";
-  await deleteMenu(id);
-  revalidatePath("/dashboard");
-}
+import { MenuItem } from "@/types/menu";
 
 export default async function DashboardPage() {
-  // Fetch data langsung di Server Component (Supabase/Firebase)
-  const menus = await getMenus();
+  // 1. Inisialisasi Supabase Server Client
+  const supabase = await createClient();
+
+  // 2. Ambil Data Langsung dari Supabase (Server-side fetching)
+  const { data: menusData } = await supabase
+    .from("menu_items")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  // Mapping data agar sesuai tipe MenuItem
+  const menus: MenuItem[] = (menusData || []).map((item) => ({
+    id: item.id,
+    name: item.name,
+    description: item.description,
+    price: item.price,
+    category: item.category,
+    imageUrl: item.image_url,
+    isAvailable: item.is_available,
+    createdAt: new Date(item.created_at).getTime(),
+  }));
 
   return (
     <div className='p-6 max-w-6xl mx-auto space-y-8'>
@@ -39,7 +51,7 @@ export default async function DashboardPage() {
         {/* QR Code Card */}
         <div className='bg-white p-4 rounded-xl border shadow-sm'>
           <h3 className='font-semibold mb-4'>Link Pemesanan</h3>
-          <ShareMenu /> {/* Reusable component QR */}
+          <ShareMenu />
         </div>
       </div>
 
@@ -55,18 +67,21 @@ export default async function DashboardPage() {
               key={menu.id}
               className='p-4 flex items-center gap-4 hover:bg-zinc-50 transition'
             >
-              {/* Gambar Kecil */}
-              <div className='w-16 h-16 bg-zinc-100 rounded-lg overflow-hidden flex-shrink-0'>
-                {menu.imageUrl && (
+              <div className='w-16 h-16 bg-zinc-100 rounded-lg overflow-hidden flex-shrink-0 relative'>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {menu.imageUrl ? (
                   <img
                     src={menu.imageUrl}
                     alt={menu.name}
                     className='w-full h-full object-cover'
                   />
+                ) : (
+                  <div className='w-full h-full flex items-center justify-center text-zinc-400 text-xs'>
+                    No IMG
+                  </div>
                 )}
               </div>
 
-              {/* Info Menu */}
               <div className='flex-1 min-w-0'>
                 <h4 className='font-bold text-zinc-900'>{menu.name}</h4>
                 <p className='text-sm text-zinc-500 truncate'>
@@ -82,7 +97,6 @@ export default async function DashboardPage() {
                 </div>
               </div>
 
-              {/* Tombol Aksi */}
               <div className='flex items-center gap-2'>
                 <Link href={`/menu/${menu.id}`}>
                   <Button variant='outline' size='icon' className='h-9 w-9'>
@@ -90,7 +104,7 @@ export default async function DashboardPage() {
                   </Button>
                 </Link>
 
-                {/* Form Delete sederhana untuk Server Action */}
+                {/* Tombol Delete dengan Server Action */}
                 <form
                   action={async () => {
                     "use server";
@@ -112,7 +126,7 @@ export default async function DashboardPage() {
 
           {menus.length === 0 && (
             <div className='p-12 text-center text-zinc-400'>
-              Belum ada menu yang ditambahkan.
+              Belum ada menu. Klik tombol tambah di atas.
             </div>
           )}
         </div>

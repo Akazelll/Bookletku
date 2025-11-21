@@ -5,10 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MenuItem, CATEGORIES } from "@/types/menu";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input"; // Pastikan sudah ada komponen UI ini
-import { Label } from "@/components/ui/label"; // Opsional: shadcn label
-import { ArrowLeft, Save, Loader2, ImagePlus } from "lucide-react";
-// Import service Anda (asumsi sudah migrasi ke Supabase)
+import { ArrowLeft, Save, Loader2, ImagePlus, X } from "lucide-react";
 import {
   createMenu,
   updateMenu,
@@ -69,8 +66,9 @@ export default function MenuForm({
         await createMenu(payload);
       }
 
-      router.push("/dashboard"); // Kembali ke dashboard setelah save
-      router.refresh(); // Refresh data dashboard
+      // Redirect kembali ke dashboard
+      router.push("/dashboard");
+      router.refresh();
     } catch (error) {
       console.error("Error saving menu:", error);
       alert("Gagal menyimpan menu.");
@@ -80,12 +78,12 @@ export default function MenuForm({
   };
 
   return (
-    <div className='max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-zinc-200'>
+    <div className='max-w-2xl mx-auto bg-white dark:bg-zinc-900 p-8 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800'>
       <div className='flex items-center gap-4 mb-6'>
-        <Button variant='ghost' onClick={() => router.back()}>
+        <Button variant='ghost' onClick={() => router.back()} type='button'>
           <ArrowLeft className='w-4 h-4' />
         </Button>
-        <h1 className='text-2xl font-bold'>
+        <h1 className='text-2xl font-bold text-zinc-900 dark:text-zinc-100'>
           {isEditing ? "Edit Menu" : "Tambah Menu Baru"}
         </h1>
       </div>
@@ -93,29 +91,52 @@ export default function MenuForm({
       <form onSubmit={handleSubmit} className='space-y-6'>
         {/* Image Upload */}
         <div className='space-y-2'>
-          <label className='font-medium text-sm'>Foto Menu</label>
+          <label className='font-medium text-sm text-zinc-900 dark:text-zinc-100'>
+            Foto Menu
+          </label>
           <div className='flex gap-4 items-center'>
-            <div className='w-24 h-24 bg-zinc-100 rounded-lg flex items-center justify-center border-2 border-dashed border-zinc-300 overflow-hidden relative'>
+            <div className='w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center border-2 border-dashed border-zinc-300 dark:border-zinc-700 overflow-hidden relative'>
               {preview ? (
-                <img
-                  src={preview}
-                  alt='Preview'
-                  className='w-full h-full object-cover'
-                />
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={preview}
+                    alt='Preview'
+                    className='w-full h-full object-cover'
+                  />
+                  <button
+                    type='button'
+                    onClick={() => {
+                      setImageFile(null);
+                      setPreview(null);
+                      setFormData((p) => ({ ...p, imageUrl: "" }));
+                    }}
+                    className='absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity'
+                  >
+                    <X className='w-6 h-6 text-white' />
+                  </button>
+                </>
               ) : (
-                <ImagePlus className='text-zinc-400' />
+                <ImagePlus className='text-zinc-400 w-8 h-8' />
               )}
             </div>
-            <input type='file' accept='image/*' onChange={handleImageChange} />
+            <input
+              type='file'
+              accept='image/*'
+              onChange={handleImageChange}
+              className='block w-full text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200'
+            />
           </div>
         </div>
 
         {/* Nama Menu */}
         <div className='space-y-2'>
-          <label className='font-medium text-sm'>Nama Menu</label>
+          <label className='font-medium text-sm text-zinc-900 dark:text-zinc-100'>
+            Nama Menu
+          </label>
           <input
             required
-            className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors'
+            className='w-full p-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm'
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder='Contoh: Nasi Goreng Spesial'
@@ -125,21 +146,26 @@ export default function MenuForm({
         {/* Harga & Kategori */}
         <div className='grid grid-cols-2 gap-4'>
           <div className='space-y-2'>
-            <label className='font-medium text-sm'>Harga (Rp)</label>
+            <label className='font-medium text-sm text-zinc-900 dark:text-zinc-100'>
+              Harga (Rp)
+            </label>
             <input
               type='number'
               required
-              className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors'
-              value={formData.price}
+              min='0'
+              className='w-full p-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm'
+              value={formData.price || ""}
               onChange={(e) =>
                 setFormData({ ...formData, price: Number(e.target.value) })
               }
             />
           </div>
           <div className='space-y-2'>
-            <label className='font-medium text-sm'>Kategori</label>
+            <label className='font-medium text-sm text-zinc-900 dark:text-zinc-100'>
+              Kategori
+            </label>
             <select
-              className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors'
+              className='w-full p-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm'
               value={formData.category}
               onChange={(e) =>
                 setFormData({ ...formData, category: e.target.value })
@@ -156,19 +182,22 @@ export default function MenuForm({
 
         {/* Deskripsi */}
         <div className='space-y-2'>
-          <label className='font-medium text-sm'>Deskripsi</label>
+          <label className='font-medium text-sm text-zinc-900 dark:text-zinc-100'>
+            Deskripsi
+          </label>
           <textarea
-            className='flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm'
+            className='w-full p-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm min-h-[100px]'
             value={formData.description}
             onChange={(e) =>
               setFormData({ ...formData, description: e.target.value })
             }
+            placeholder='Jelaskan menu ini...'
           />
         </div>
 
         <Button
           type='submit'
-          className='w-full bg-black text-white hover:bg-zinc-800'
+          className='w-full bg-black text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 h-11 rounded-xl'
           disabled={isLoading}
         >
           {isLoading ? (

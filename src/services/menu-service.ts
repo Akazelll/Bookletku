@@ -1,113 +1,79 @@
-import { createClient } from "@/lib/supabase/client";
 import { MenuItem } from "@/types/menu";
 
-const supabase = createClient();
+// DATA DUMMY (Pura-pura dari Database)
+let MOCK_MENUS: MenuItem[] = [
+  {
+    id: "1",
+    name: "Nasi Goreng Spesial",
+    description: "Nasi goreng dengan telur, ayam suwir, dan sate ayam.",
+    price: 25000,
+    category: "Makanan Utama",
+    imageUrl:
+      "https://images.unsplash.com/photo-1603133872878-684f57df8cca?w=800&q=80", // Gambar random unsplash
+    isAvailable: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: "2",
+    name: "Es Teh Manis Jumbo",
+    description: "Teh manis dingin ukuran jumbo segar.",
+    price: 5000,
+    category: "Minuman",
+    imageUrl:
+      "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800&q=80",
+    isAvailable: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: "3",
+    name: "Roti Bakar Coklat Keju",
+    description: "Roti bakar tebal dengan topping melimpah.",
+    price: 15000,
+    category: "Cemilan",
+    imageUrl:
+      "https://images.unsplash.com/photo-1557925923-cd4648e211a0?w=800&q=80",
+    isAvailable: true,
+    createdAt: Date.now(),
+  },
+];
 
-// Helper untuk mapping data dari DB (snake_case) ke App (camelCase)
-const mapToMenuItem = (data: any): MenuItem => ({
-  id: data.id,
-  name: data.name,
-  description: data.description,
-  price: data.price,
-  category: data.category, // Asumsi di tabel kolomnya 'category' (text)
-  imageUrl: data.image_url,
-  isAvailable: data.is_available,
-  createdAt: new Date(data.created_at).getTime(),
-});
+// --- FUNGSI-FUNGSI SERVICE (MOCK VERSION) ---
 
 export const getMenus = async (): Promise<MenuItem[]> => {
-  const { data, error } = await supabase
-    .from("menu_items")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Error fetching menus:", error.message);
-    return [];
-  }
-  return data.map(mapToMenuItem);
+  // Simulasi delay network
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  return MOCK_MENUS;
 };
 
 export const getMenuById = async (id: string): Promise<MenuItem | null> => {
-  const { data, error } = await supabase
-    .from("menu_items")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error || !data) return null;
-  return mapToMenuItem(data);
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  return MOCK_MENUS.find((m) => m.id === id) || null;
 };
 
 export const createMenu = async (menu: Partial<MenuItem>) => {
-  // Mapping ke format DB
-  const payload = {
-    name: menu.name,
-    description: menu.description,
-    price: menu.price,
-    category: menu.category,
-    image_url: menu.imageUrl,
-    is_available: menu.isAvailable,
-  };
-
-  const { data, error } = await supabase
-    .from("menu_items")
-    .insert([payload])
-    .select()
-    .single();
-
-  if (error) throw new Error(error.message);
-  return mapToMenuItem(data);
+  const newItem: MenuItem = {
+    ...menu,
+    id: Math.random().toString(36).substring(7),
+    createdAt: Date.now(),
+  } as MenuItem;
+  MOCK_MENUS.unshift(newItem);
+  return newItem;
 };
 
 export const updateMenu = async (id: string, updates: Partial<MenuItem>) => {
-  const payload: any = { ...updates };
-  // Mapping field jika ada update
-  if (updates.imageUrl !== undefined) payload.image_url = updates.imageUrl;
-  if (updates.isAvailable !== undefined)
-    payload.is_available = updates.isAvailable;
-  // Hapus field frontend only agar tidak error di DB
-  delete payload.imageUrl;
-  delete payload.isAvailable;
-  delete payload.createdAt;
-  delete payload.id;
-
-  const { data, error } = await supabase
-    .from("menu_items")
-    .update(payload)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) throw new Error(error.message);
-  return mapToMenuItem(data);
+  const index = MOCK_MENUS.findIndex((m) => m.id === id);
+  if (index !== -1) {
+    MOCK_MENUS[index] = { ...MOCK_MENUS[index], ...updates };
+    return MOCK_MENUS[index];
+  }
+  throw new Error("Menu not found");
 };
 
 export const deleteMenu = async (id: string) => {
-  const { error } = await supabase.from("menu_items").delete().eq("id", id);
-
-  if (error) throw new Error(error.message);
+  MOCK_MENUS = MOCK_MENUS.filter((m) => m.id !== id);
 };
 
 export const uploadMenuImage = async (file: File): Promise<string> => {
-  // Validasi file
-  if (!file) throw new Error("No file provided");
-
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${Date.now()}-${Math.random()
-    .toString(36)
-    .substring(7)}.${fileExt}`;
-  const filePath = `menus/${fileName}`;
-
-  // 1. Upload ke Supabase Storage
-  const { error: uploadError } = await supabase.storage
-    .from("menu-images") // Pastikan bucket ini ada di Supabase Storage
-    .upload(filePath, file);
-
-  if (uploadError) throw new Error(uploadError.message);
-
-  // 2. Ambil Public URL
-  const { data } = supabase.storage.from("menu-images").getPublicUrl(filePath);
-
-  return data.publicUrl;
+  // Return dummy image karena kita belum connect storage
+  return "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80";
 };

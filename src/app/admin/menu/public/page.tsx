@@ -1,7 +1,6 @@
-// Halaman ini akan menampilkan menu untuk pelanggan
 import { createClient } from "@/lib/supabase/server";
 import { MenuItem } from "@/types/menu";
-import MenuPublic from "@/components/menu-public"; // Komponen tampilan pelanggan
+import MenuPublic from "@/components/menu-public";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +10,7 @@ export default async function PublicMenuPage() {
   const { data } = await supabase
     .from("menu_items")
     .select("*")
-    .eq("is_available", true) // Hanya tampilkan yang tersedia
+    .eq("is_available", true)
     .order("created_at", { ascending: false });
 
   const menus: MenuItem[] = (data || []).map((item) => ({
@@ -25,6 +24,5 @@ export default async function PublicMenuPage() {
     createdAt: new Date(item.created_at).getTime(),
   }));
 
-  // Kita hardcode tema 'minimalist' dulu, nanti bisa ambil dari tabel settings
   return <MenuPublic initialMenus={menus} initialTheme='minimalist' />;
 }

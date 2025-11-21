@@ -8,14 +8,17 @@ import { Copy, Check, ExternalLink, Printer } from "lucide-react";
 export default function ShareMenu() {
   const [mounted, setMounted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [menuUrl, setMenuUrl] = useState("");
 
   useEffect(() => {
     setMounted(true);
+    // Set URL dinamis berdasarkan window location
+    if (typeof window !== "undefined") {
+      setMenuUrl(`${window.location.origin}/menu/public`);
+    }
   }, []);
 
   if (!mounted) return null;
-
-  const menuUrl = `${window.location.origin}/menu`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(menuUrl);

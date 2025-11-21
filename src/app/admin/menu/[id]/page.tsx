@@ -1,22 +1,28 @@
-// src/app/admin/menu/[id]/page.tsx
-import { getMenuById } from "@/services/menu-service";
-import MenuForm from "@/components/admin/menu-form"; // Import dari path baru
+import { getMenuById } from "@/services/menu-service"; // Kembali ke service
+import MenuForm from "@/components/admin/menu-form";
 import { notFound } from "next/navigation";
 
-export default async function EditMenuPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const menu = await getMenuById(params.id);
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
 
-  if (!menu) return notFound();
+export default async function EditMenuPage({ params }: PageProps) {
+  const { id } = await params;
+
+  // Fetch dari Mock Service
+  const menu = await getMenuById(id);
+
+  if (!menu) {
+    return notFound();
+  }
 
   return (
-    <div className='p-6 min-h-screen bg-zinc-50/50 flex justify-center'>
-      <div className='w-full max-w-2xl mt-8'>
-        <MenuForm initialData={menu} isEditing={true} />
+    <div className='max-w-3xl mx-auto mt-6'>
+      {/* Breadcrumb simple */}
+      <div className='mb-6 text-sm text-zinc-500'>
+        Admin / Menu / <span className='text-zinc-900 font-medium'>Edit</span>
       </div>
+      <MenuForm initialData={menu} isEditing={true} />
     </div>
   );
 }

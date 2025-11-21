@@ -2,19 +2,19 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { analytics } from "@/lib/firebase";
-import { logEvent } from "firebase/analytics";
+// HAPUS baris ini: import { analytics } from "@/lib/firebase";
+// HAPUS baris ini: import { logEvent } from "firebase/analytics";
 import { MenuItem, CATEGORIES } from "@/types/menu";
-import {
-  Loader2,
-  Minus,
-  Plus,
-  Send,
-  ShoppingBag,
-  Trash2,
-  Utensils,
-  Globe,
-} from "lucide-react";
+import { Minus, Plus, Send, ShoppingBag, Utensils, Globe } from "lucide-react";
+
+// ... kode lainnya ...
+
+// Track item paling dilihat/diminati (saat masuk keranjang)
+const trackAddToCart = (item: MenuItem) => {
+  // Hapus logic Firebase Analytics
+  console.log("Add to cart tracked:", item.name);
+  // Nanti bisa diganti dengan Supabase Analytics custom jika perlu
+};
 
 // --- KAMUS BAHASA ---
 const TRANSLATIONS = {

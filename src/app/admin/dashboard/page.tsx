@@ -1,17 +1,15 @@
 import Link from "next/link";
-import { getMenus } from "@/services/menu-service"; // Sekarang pakai Mock Data
-import { Button } from "@/components/ui/button";
+import { getMenus } from "@/services/menu-service";
 import MenuListWrapper from "@/components/admin/menu-list-wrapper";
-import { Plus, TrendingUp, Users, ShoppingBag, DollarSign } from "lucide-react";
+import CreateMenuDialog from "@/components/admin/create-menu-dialog"; // Import ini
+import { TrendingUp, Users, ShoppingBag, DollarSign } from "lucide-react";
 
 export default async function DashboardPage() {
-  // Fetch Mock Data
   const menus = await getMenus();
 
-  // Hitung statistik sederhana
+  // Statistik sederhana
   const totalItems = menus.length;
   const activeItems = menus.filter((m) => m.isAvailable).length;
-  const lowestPrice = Math.min(...menus.map((m) => m.price));
 
   return (
     <div className='max-w-6xl mx-auto space-y-8'>
@@ -25,14 +23,12 @@ export default async function DashboardPage() {
             Pantau performa menu dan katalog restoran Anda hari ini.
           </p>
         </div>
-        <Link href='/admin/menu/create'>
-          <Button className='bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black rounded-xl h-11 px-6 shadow-lg shadow-zinc-500/20 transition-all'>
-            <Plus className='mr-2 h-4 w-4' /> Buat Menu Baru
-          </Button>
-        </Link>
+
+        {/* GANTI LINK LAMA DENGAN DIALOG */}
+        <CreateMenuDialog />
       </div>
 
-      {/* Stats Cards Grid */}
+      {/* Stats Cards Grid (Sama seperti sebelumnya) */}
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
         <StatsCard
           title='Total Menu'
@@ -63,16 +59,11 @@ export default async function DashboardPage() {
       {/* Recent Menu Table Section */}
       <div className='bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden'>
         <div className='p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center'>
-          <h3 className='font-bold text-lg'>Menu Terbaru</h3>
-          <Link
-            href='/admin/dashboard'
-            className='text-sm text-blue-600 hover:underline'
-          >
-            Lihat Semua
-          </Link>
+          <h3 className='font-bold text-lg text-zinc-900 dark:text-zinc-100'>
+            Daftar Menu
+          </h3>
         </div>
         <div className='p-0'>
-          {/* Kita reuse component list tapi nanti kita styling ulang di step berikutnya */}
           <MenuListWrapper initialMenus={menus} />
         </div>
       </div>
@@ -80,7 +71,7 @@ export default async function DashboardPage() {
   );
 }
 
-// Komponen Kecil untuk Card Statistik
+// Komponen StatsCard tetap sama...
 function StatsCard({ title, value, desc, icon: Icon }: any) {
   return (
     <div className='bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-shadow'>

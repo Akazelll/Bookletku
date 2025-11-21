@@ -1,23 +1,22 @@
-// src/app/(admin)/menu/[id]/page.tsx
+// src/app/admin/menu/[id]/page.tsx
 import { getMenuById } from "@/services/menu-service";
-import MenuForm from "@/components/admin/menu-form";
+import MenuForm from "@/components/admin/menu-form"; // Import dari path baru
 import { notFound } from "next/navigation";
 
-interface PageProps {
+export default async function EditMenuPage({
+  params,
+}: {
   params: { id: string };
-}
-
-export default async function EditMenuPage({ params }: PageProps) {
-  // Fetch data spesifik menu berdasarkan ID
+}) {
   const menu = await getMenuById(params.id);
 
-  if (!menu) {
-    return notFound(); // Tampilkan halaman 404 jika ID salah
-  }
+  if (!menu) return notFound();
 
   return (
-    <div className='p-6 min-h-screen bg-zinc-50/50'>
-      <MenuForm initialData={menu} isEditing={true} />
+    <div className='p-6 min-h-screen bg-zinc-50/50 flex justify-center'>
+      <div className='w-full max-w-2xl mt-8'>
+        <MenuForm initialData={menu} isEditing={true} />
+      </div>
     </div>
   );
 }

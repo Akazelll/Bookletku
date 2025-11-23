@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client"; // Import Supabase Client
 import {
   LayoutDashboard,
   UtensilsCrossed,
@@ -38,9 +39,20 @@ const menuItems = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      router.replace("/login"); // Gunakan replace agar tidak bisa back
+      router.refresh(); // Refresh agar middleware memvalidasi ulang
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   return (
-    // Hapus 'w-64' fixed width di sini agar mengikuti parent (Desktop: layout, Mobile: Sheet)
     <div className='flex flex-col h-full w-full bg-white dark:bg-zinc-900'>
       {/* Logo Area */}
       <div className='h-16 flex items-center px-6 border-b border-zinc-100 dark:border-zinc-800'>
@@ -58,7 +70,6 @@ export default function AdminSidebar() {
           Main Menu
         </div>
         {menuItems.map((item) => {
-          // Cek active state dengan lebih teliti (termasuk sub-routes)
           const isActive =
             pathname === item.href || pathname.startsWith(`${item.href}/`);
 
@@ -99,10 +110,13 @@ export default function AdminSidebar() {
             Lihat Toko
           </Button>
         </Link>
+        
+        {/* Tombol Logout dengan Handler */}
         <Button
           variant='ghost'
           className='w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20'
           size='sm'
+          onClick={handleLogout}
         >
           <LogOut className='w-4 h-4' />
           Keluar

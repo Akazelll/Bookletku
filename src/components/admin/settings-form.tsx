@@ -1,10 +1,6 @@
 "use client";
 
-<<<<<<< HEAD
-import { useState } from "react";
-=======
 import { useState, useEffect } from "react";
->>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,33 +12,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Save, Loader2, Store, Phone, Palette } from "lucide-react";
-<<<<<<< HEAD
-
-export default function SettingsForm() {
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Mock Data State
-  const [formData, setFormData] = useState({
-    restaurantName: "Restoran Enak Jaya",
-    whatsappNumber: "6281234567890",
-    theme: "minimalist",
-  });
-
-=======
 import { getSettings, saveSettings } from "@/services/settings-service";
 
 export default function SettingsForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
 
-  // State Form Data
   const [formData, setFormData] = useState({
     restaurantName: "",
     whatsappNumber: "",
     theme: "minimalist",
   });
 
-  // Fetch data settings saat komponen di-mount
   useEffect(() => {
     async function loadData() {
       try {
@@ -63,33 +44,23 @@ export default function SettingsForm() {
     loadData();
   }, []);
 
-  // Handle Simpan Perubahan
->>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-<<<<<<< HEAD
-    // Simulasi Save ke Database
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    alert("Pengaturan berhasil disimpan!");
-    setIsLoading(false);
-  };
-
-=======
     try {
       await saveSettings(formData);
       alert("Pengaturan berhasil disimpan!");
-    } catch (error) {
-      console.error(error);
-      alert("Gagal menyimpan pengaturan. Pastikan Anda sudah login.");
+    } catch (error: any) {
+      // Perbaikan: Gunakan 'any' atau cek instanceof Error untuk menghindari error TS
+      console.error("Error saving settings:", error);
+      const message = error?.message || "Terjadi kesalahan saat menyimpan.";
+      alert(`Gagal menyimpan: ${message}. Pastikan Anda sudah login.`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Tampilan Loading Awal
   if (isFetching) {
     return (
       <div className="flex h-40 items-center justify-center text-zinc-500">
@@ -99,10 +70,8 @@ export default function SettingsForm() {
     );
   }
 
->>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
   return (
     <form onSubmit={handleSave} className='space-y-6'>
-      {/* Kartu Profil Restoran */}
       <Card className='border-zinc-200 dark:border-zinc-800'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2 text-lg'>
@@ -123,10 +92,7 @@ export default function SettingsForm() {
                 setFormData({ ...formData, restaurantName: e.target.value })
               }
               placeholder='Contoh: Kopi Senja'
-<<<<<<< HEAD
-=======
               required
->>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
             />
           </div>
           <div className='space-y-2'>
@@ -141,10 +107,7 @@ export default function SettingsForm() {
                   setFormData({ ...formData, whatsappNumber: e.target.value })
                 }
                 placeholder='628...'
-<<<<<<< HEAD
-=======
                 required
->>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
               />
             </div>
             <p className='text-[11px] text-zinc-500'>
@@ -155,7 +118,6 @@ export default function SettingsForm() {
         </CardContent>
       </Card>
 
-      {/* Kartu Tampilan / Tema */}
       <Card className='border-zinc-200 dark:border-zinc-800'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2 text-lg'>
@@ -168,7 +130,6 @@ export default function SettingsForm() {
         </CardHeader>
         <CardContent>
           <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-            {/* Opsi Minimalist */}
             <div
               onClick={() => setFormData({ ...formData, theme: "minimalist" })}
               className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${
@@ -183,7 +144,6 @@ export default function SettingsForm() {
               </p>
             </div>
 
-            {/* Opsi Colorful */}
             <div
               onClick={() => setFormData({ ...formData, theme: "colorful" })}
               className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${
@@ -198,7 +158,6 @@ export default function SettingsForm() {
               </p>
             </div>
 
-            {/* Opsi Dark Mode (Coming Soon) */}
             <div className='opacity-50 cursor-not-allowed p-4 rounded-xl border-2 border-zinc-100'>
               <div className='h-16 bg-zinc-800 rounded-lg mb-3'></div>
               <p className='text-center font-semibold text-xs text-zinc-400'>
@@ -209,10 +168,6 @@ export default function SettingsForm() {
         </CardContent>
       </Card>
 
-<<<<<<< HEAD
-=======
-      {/* Tombol Simpan */}
->>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
       <div className='flex justify-end'>
         <Button
           type='submit'
@@ -229,8 +184,4 @@ export default function SettingsForm() {
       </div>
     </form>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5

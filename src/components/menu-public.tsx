@@ -2,26 +2,17 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
-<<<<<<< HEAD
-// HAPUS baris ini: import { analytics } from "@/lib/firebase";
-// HAPUS baris ini: import { logEvent } from "firebase/analytics";
 import { MenuItem, CATEGORIES } from "@/types/menu";
-import { Minus, Plus, Send, ShoppingBag, Utensils, Globe } from "lucide-react";
-
-// ... kode lainnya ...
-
-// Track item paling dilihat/diminati (saat masuk keranjang)
-const trackAddToCart = (item: MenuItem) => {
-  // Hapus logic Firebase Analytics
-  console.log("Add to cart tracked:", item.name);
-  // Nanti bisa diganti dengan Supabase Analytics custom jika perlu
-};
-=======
-import { MenuItem, CATEGORIES } from "@/types/menu";
-import { Minus, Plus, Send, ShoppingBag, Utensils, Globe, Trash2 } from "lucide-react";
-// Pastikan file analytics-service.ts sudah dibuat di langkah sebelumnya
+import {
+  Minus,
+  Plus,
+  Send,
+  ShoppingBag,
+  Utensils,
+  Globe,
+  Trash2,
+} from "lucide-react";
 import { logEvent } from "@/services/analytics-service";
->>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
 
 // --- KAMUS BAHASA ---
 const TRANSLATIONS = {
@@ -90,18 +81,6 @@ export default function MenuPublic({
     setSelectedCategory(t.all);
   }, [lang, t.all]);
 
-<<<<<<< HEAD
-  // Track item paling dilihat/diminati (saat masuk keranjang)
-  const trackAddToCart = (item: MenuItem) => {
-    if (analytics) {
-      logEvent(analytics, "add_to_cart", {
-        item_id: item.id,
-        item_name: item.name,
-        item_category: item.category,
-        value: item.price,
-        currency: "IDR",
-      });
-=======
   // --- ANALYTICS: Track Page View ---
   useEffect(() => {
     logEvent("page_view");
@@ -111,31 +90,22 @@ export default function MenuPublic({
   const trackAddToCart = (item: MenuItem) => {
     if (item.id) {
       logEvent("add_to_cart", item.id);
->>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
     }
   };
 
   // Logic Keranjang
   const updateCart = (item: MenuItem, delta: number) => {
-<<<<<<< HEAD
-=======
     if (!item.id) return;
 
->>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
     setCart((prev) => {
       const newCount = (prev[item.id!] || 0) + delta;
       const newCart = { ...prev };
       if (newCount > 0) {
-<<<<<<< HEAD
-        newCart[item.id!] = newCount;
-        if (delta > 0) trackAddToCart(item); // Track analytics
-=======
         // Jika user menambah item (bukan mengurangi), catat event
         if (delta > 0) {
           trackAddToCart(item);
         }
         newCart[item.id!] = newCount;
->>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
       } else {
         delete newCart[item.id!];
       }
@@ -145,21 +115,19 @@ export default function MenuPublic({
 
   const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
   const totalPrice = menus.reduce((total, item) => {
-    return total + item.price * (cart[item.id!] || 0);
+    if (!item.id) return total;
+    return total + item.price * (cart[item.id] || 0);
   }, 0);
 
-<<<<<<< HEAD
-  const cartItemsList = menus.filter((m) => cart[m.id!]);
-=======
   const cartItemsList = menus.filter((m) => m.id && cart[m.id]);
->>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
 
   const handleCheckout = () => {
     if (cartItemsList.length === 0) return;
     let message = `${t.greeting}\n\n`;
     cartItemsList.forEach((item) => {
+      if (!item.id) return;
       message += `- ${item.name} (${
-        cart[item.id!]
+        cart[item.id]
       }) x Rp${item.price.toLocaleString("id-ID")}\n`;
     });
     message += `\n*${t.total}: Rp ${totalPrice.toLocaleString("id-ID")}*`;
@@ -286,9 +254,9 @@ export default function MenuPublic({
                         </span>
                       </div>
                     )}
-                    {cart[menu.id!] > 0 && (
+                    {menu.id && cart[menu.id] > 0 && (
                       <div className='hidden md:flex absolute top-3 right-3 bg-black/80 backdrop-blur text-white text-xs font-bold px-2 py-1 rounded-lg shadow-sm animate-in fade-in zoom-in z-10'>
-                        {cart[menu.id!]}x
+                        {cart[menu.id]}x
                       </div>
                     )}
                   </div>
@@ -306,7 +274,7 @@ export default function MenuPublic({
                         Rp {menu.price.toLocaleString("id-ID")}
                       </span>
                       <div className='flex items-center gap-2'>
-                        {cart[menu.id!] ? (
+                        {menu.id && cart[menu.id] ? (
                           <>
                             <button
                               onClick={() => updateCart(menu, -1)}
@@ -315,19 +283,19 @@ export default function MenuPublic({
                               <Minus className='w-3 h-3' />
                             </button>
                             <span className='w-4 text-center text-sm font-bold text-zinc-900'>
-                              {cart[menu.id!]}
+                              {cart[menu.id]}
                             </span>
                           </>
                         ) : null}
                         <button
                           onClick={() => updateCart(menu, 1)}
                           className={`flex items-center justify-center rounded-full shadow-sm transition-all active:scale-90 ${
-                            cart[menu.id!]
+                            menu.id && cart[menu.id]
                               ? `w-8 h-8 text-white hover:opacity-90 ${primaryBg}`
                               : "px-4 py-1.5 bg-zinc-900 text-white text-xs font-bold hover:bg-black"
                           }`}
                         >
-                          {cart[menu.id!] ? (
+                          {menu.id && cart[menu.id] ? (
                             <Plus className='w-4 h-4' />
                           ) : (
                             t.add
@@ -387,7 +355,7 @@ export default function MenuPublic({
                           onClick={() =>
                             setCart((prev) => {
                               const n = { ...prev };
-                              delete n[item.id!];
+                              if (item.id) delete n[item.id];
                               return n;
                             })
                           }
@@ -408,7 +376,7 @@ export default function MenuPublic({
                             <Minus className='w-3 h-3' />
                           </button>
                           <span className='text-xs font-bold w-4 text-center'>
-                            {cart[item.id!]}
+                            {item.id ? cart[item.id] : 0}
                           </span>
                           <button
                             onClick={() => updateCart(item, 1)}
@@ -513,7 +481,7 @@ export default function MenuPublic({
                   >
                     <div className='flex gap-4 items-center'>
                       <div className='bg-white w-10 h-10 rounded-lg flex items-center justify-center font-bold text-zinc-900 border border-zinc-200 shadow-sm'>
-                        {cart[item.id!]}x
+                        {item.id ? cart[item.id] : 0}x
                       </div>
                       <div>
                         <div className='text-sm font-bold text-zinc-900 line-clamp-1'>
@@ -525,7 +493,10 @@ export default function MenuPublic({
                       </div>
                     </div>
                     <div className='font-bold text-zinc-900'>
-                      Rp{(item.price * cart[item.id!]).toLocaleString("id-ID")}
+                      Rp
+                      {(
+                        item.price * (item.id ? cart[item.id] : 0)
+                      ).toLocaleString("id-ID")}
                     </div>
                   </div>
                 ))}
@@ -553,8 +524,4 @@ export default function MenuPublic({
       </div>
     </div>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5

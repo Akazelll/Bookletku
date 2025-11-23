@@ -2,10 +2,26 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
+<<<<<<< HEAD
+// HAPUS baris ini: import { analytics } from "@/lib/firebase";
+// HAPUS baris ini: import { logEvent } from "firebase/analytics";
+import { MenuItem, CATEGORIES } from "@/types/menu";
+import { Minus, Plus, Send, ShoppingBag, Utensils, Globe } from "lucide-react";
+
+// ... kode lainnya ...
+
+// Track item paling dilihat/diminati (saat masuk keranjang)
+const trackAddToCart = (item: MenuItem) => {
+  // Hapus logic Firebase Analytics
+  console.log("Add to cart tracked:", item.name);
+  // Nanti bisa diganti dengan Supabase Analytics custom jika perlu
+};
+=======
 import { MenuItem, CATEGORIES } from "@/types/menu";
 import { Minus, Plus, Send, ShoppingBag, Utensils, Globe, Trash2 } from "lucide-react";
 // Pastikan file analytics-service.ts sudah dibuat di langkah sebelumnya
 import { logEvent } from "@/services/analytics-service";
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
 
 // --- KAMUS BAHASA ---
 const TRANSLATIONS = {
@@ -74,6 +90,18 @@ export default function MenuPublic({
     setSelectedCategory(t.all);
   }, [lang, t.all]);
 
+<<<<<<< HEAD
+  // Track item paling dilihat/diminati (saat masuk keranjang)
+  const trackAddToCart = (item: MenuItem) => {
+    if (analytics) {
+      logEvent(analytics, "add_to_cart", {
+        item_id: item.id,
+        item_name: item.name,
+        item_category: item.category,
+        value: item.price,
+        currency: "IDR",
+      });
+=======
   // --- ANALYTICS: Track Page View ---
   useEffect(() => {
     logEvent("page_view");
@@ -83,22 +111,31 @@ export default function MenuPublic({
   const trackAddToCart = (item: MenuItem) => {
     if (item.id) {
       logEvent("add_to_cart", item.id);
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
     }
   };
 
   // Logic Keranjang
   const updateCart = (item: MenuItem, delta: number) => {
+<<<<<<< HEAD
+=======
     if (!item.id) return;
 
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
     setCart((prev) => {
       const newCount = (prev[item.id!] || 0) + delta;
       const newCart = { ...prev };
       if (newCount > 0) {
+<<<<<<< HEAD
+        newCart[item.id!] = newCount;
+        if (delta > 0) trackAddToCart(item); // Track analytics
+=======
         // Jika user menambah item (bukan mengurangi), catat event
         if (delta > 0) {
           trackAddToCart(item);
         }
         newCart[item.id!] = newCount;
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
       } else {
         delete newCart[item.id!];
       }
@@ -111,7 +148,11 @@ export default function MenuPublic({
     return total + item.price * (cart[item.id!] || 0);
   }, 0);
 
+<<<<<<< HEAD
+  const cartItemsList = menus.filter((m) => cart[m.id!]);
+=======
   const cartItemsList = menus.filter((m) => m.id && cart[m.id]);
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
 
   const handleCheckout = () => {
     if (cartItemsList.length === 0) return;
@@ -512,4 +553,8 @@ export default function MenuPublic({
       </div>
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5

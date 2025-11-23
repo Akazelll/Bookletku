@@ -1,5 +1,22 @@
 import Link from "next/link";
 import { getMenus } from "@/services/menu-service";
+<<<<<<< HEAD
+import MenuListWrapper from "@/components/admin/menu-list-wrapper";
+import { TrendingUp, Users, ShoppingBag, DollarSign } from "lucide-react";
+
+// Hapus import CreateMenuDialog
+
+export default async function DashboardPage() {
+  const menus = await getMenus();
+
+  // Statistik
+  const totalItems = menus.length;
+  const activeItems = menus.filter((m) => m.isAvailable).length;
+
+  return (
+    <div className='max-w-6xl mx-auto space-y-8'>
+      {/* Header Sederhana */}
+=======
 // PENTING: Import dari analytics-server, BUKAN analytics-service
 import { getDashboardStats } from "@/services/analytics-server"; 
 import MenuListWrapper from "@/components/admin/menu-list-wrapper";
@@ -25,6 +42,7 @@ export default async function DashboardPage() {
   return (
     <div className='max-w-6xl mx-auto space-y-8'>
       {/* Header */}
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
         <div>
           <h1 className='text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100'>
@@ -34,9 +52,16 @@ export default async function DashboardPage() {
             Pantau performa menu dan katalog restoran Anda hari ini.
           </p>
         </div>
+<<<<<<< HEAD
+        {/* Tombol Create SUDAH DIHAPUS dari sini */}
+      </div>
+
+      {/* Stats Cards Grid */}
+=======
       </div>
 
       {/* Kartu Statistik */}
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
         <StatsCard
           title='Total Menu'
@@ -45,6 +70,23 @@ export default async function DashboardPage() {
           icon={ShoppingBag}
         />
         <StatsCard
+<<<<<<< HEAD
+          title='Menu Aktif'
+          value={activeItems.toString()}
+          desc='Siap dipesan'
+          icon={TrendingUp}
+        />
+        <StatsCard
+          title='Kunjungan'
+          value='1,204'
+          desc='Bulan ini'
+          icon={Users}
+        />
+        <StatsCard
+          title='Estimasi Omset'
+          value={`Rp ${(totalItems * 150000).toLocaleString("id-ID")}`}
+          desc='Potensi penjualan'
+=======
           title='Total Kunjungan'
           value={stats.totalViews.toLocaleString("id-ID")}
           desc='Halaman dilihat'
@@ -60,10 +102,29 @@ export default async function DashboardPage() {
           title='Estimasi Potensi'
           value={`Rp ${estimatedRevenue.toLocaleString("id-ID")}`}
           desc='Berdasarkan klik'
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
           icon={DollarSign}
         />
       </div>
 
+<<<<<<< HEAD
+      {/* Preview List Menu Terbatas */}
+      <div className='bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden'>
+        <div className='p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center'>
+          <h3 className='font-bold text-lg text-zinc-900 dark:text-zinc-100'>
+            Menu Terbaru
+          </h3>
+          <Link
+            href='/admin/menu/list'
+            className='text-sm font-medium text-blue-600 hover:underline'
+          >
+            Kelola Semua Menu &rarr;
+          </Link>
+        </div>
+        <div className='p-4 sm:p-6'>
+          {/* viewMode="management" akan menampilkan tombol Edit & Delete secara langsung */}
+          <MenuListWrapper initialMenus={menus} viewMode='management' />
+=======
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Kolom Kiri: Preview Menu Terbaru */}
         <div className='lg:col-span-2 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden'>
@@ -121,6 +182,7 @@ export default async function DashboardPage() {
                     </ul>
                 )}
             </div>
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
         </div>
       </div>
     </div>
@@ -142,4 +204,8 @@ function StatsCard({ title, value, desc, icon: Icon }: any) {
       <p className='text-xs text-zinc-400 mt-4'>{desc}</p>
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5

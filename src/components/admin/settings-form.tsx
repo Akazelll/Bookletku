@@ -18,14 +18,12 @@ export default function SettingsForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
 
-  // State Form Data
   const [formData, setFormData] = useState({
     restaurantName: "",
     whatsappNumber: "",
     theme: "minimalist",
   });
 
-  // Fetch data settings saat komponen di-mount
   useEffect(() => {
     async function loadData() {
       try {
@@ -46,7 +44,6 @@ export default function SettingsForm() {
     loadData();
   }, []);
 
-  // Handle Simpan Perubahan
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -54,15 +51,16 @@ export default function SettingsForm() {
     try {
       await saveSettings(formData);
       alert("Pengaturan berhasil disimpan!");
-    } catch (error) {
-      console.error(error);
-      alert("Gagal menyimpan pengaturan. Pastikan Anda sudah login.");
+    } catch (error: any) {
+      // Perbaikan: Gunakan 'any' atau cek instanceof Error untuk menghindari error TS
+      console.error("Error saving settings:", error);
+      const message = error?.message || "Terjadi kesalahan saat menyimpan.";
+      alert(`Gagal menyimpan: ${message}. Pastikan Anda sudah login.`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Tampilan Loading Awal
   if (isFetching) {
     return (
       <div className="flex h-40 items-center justify-center text-zinc-500">
@@ -74,7 +72,6 @@ export default function SettingsForm() {
 
   return (
     <form onSubmit={handleSave} className='space-y-6'>
-      {/* Kartu Profil Restoran */}
       <Card className='border-zinc-200 dark:border-zinc-800'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2 text-lg'>
@@ -121,7 +118,6 @@ export default function SettingsForm() {
         </CardContent>
       </Card>
 
-      {/* Kartu Tampilan / Tema */}
       <Card className='border-zinc-200 dark:border-zinc-800'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2 text-lg'>
@@ -134,7 +130,6 @@ export default function SettingsForm() {
         </CardHeader>
         <CardContent>
           <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-            {/* Opsi Minimalist */}
             <div
               onClick={() => setFormData({ ...formData, theme: "minimalist" })}
               className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${
@@ -149,7 +144,6 @@ export default function SettingsForm() {
               </p>
             </div>
 
-            {/* Opsi Colorful */}
             <div
               onClick={() => setFormData({ ...formData, theme: "colorful" })}
               className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${
@@ -164,7 +158,6 @@ export default function SettingsForm() {
               </p>
             </div>
 
-            {/* Opsi Dark Mode (Coming Soon) */}
             <div className='opacity-50 cursor-not-allowed p-4 rounded-xl border-2 border-zinc-100'>
               <div className='h-16 bg-zinc-800 rounded-lg mb-3'></div>
               <p className='text-center font-semibold text-xs text-zinc-400'>
@@ -175,7 +168,6 @@ export default function SettingsForm() {
         </CardContent>
       </Card>
 
-      {/* Tombol Simpan */}
       <div className='flex justify-end'>
         <Button
           type='submit'

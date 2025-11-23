@@ -112,11 +112,58 @@
   --sidebar-ring: oklch(0.552 0.016 285.938);
 }
 
+/* ... kode css yang sudah ada ... */
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* --- TAMBAHKAN KODE INI DI BARIS PALING BAWAH --- */
+
+@media print {
+  /* 1. Sembunyikan semua elemen di halaman */
+  body * {
+    visibility: hidden;
+  }
+
+  /* 2. Reset body agar tidak ada scroll/halaman kosong berlebih */
+  body, html {
+    height: 100vh;
+    overflow: hidden;
+    background: white;
+  }
+
+  /* 3. Tampilkan HANYA area kartu yang mau dicetak */
+  #printable-area, #printable-area * {
+    visibility: visible;
+  }
+
+  /* 4. Posisikan kartu tepat di tengah kertas A4/struk */
+  #printable-area {
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    
+    /* Styling agar terlihat rapi saat dicetak */
+    width: 100% !important;
+    max-width: 350px !important; /* Ukuran pas untuk tent card */
+    background-color: white !important;
+    padding: 20px !important;
+    border: 1px dashed #ccc !important; /* Garis potong */
+    border-radius: 16px !important;
+    box-shadow: none !important;
+    z-index: 9999 !important;
+  }
+
+  /* 5. Hapus margin default browser */
+  @page {
+    size: auto;
+    margin: 0mm;
   }
 }

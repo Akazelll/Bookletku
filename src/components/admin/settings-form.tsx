@@ -1,6 +1,10 @@
 "use client";
 
+<<<<<<< HEAD
 import { useState } from "react";
+=======
+import { useState, useEffect } from "react";
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Save, Loader2, Store, Phone, Palette } from "lucide-react";
+<<<<<<< HEAD
 
 export default function SettingsForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -23,10 +28,48 @@ export default function SettingsForm() {
     theme: "minimalist",
   });
 
+=======
+import { getSettings, saveSettings } from "@/services/settings-service";
+
+export default function SettingsForm() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
+
+  // State Form Data
+  const [formData, setFormData] = useState({
+    restaurantName: "",
+    whatsappNumber: "",
+    theme: "minimalist",
+  });
+
+  // Fetch data settings saat komponen di-mount
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getSettings();
+        if (data) {
+          setFormData({
+            restaurantName: data.restaurantName || "",
+            whatsappNumber: data.whatsappNumber || "",
+            theme: data.theme || "minimalist",
+          });
+        }
+      } catch (error) {
+        console.error("Gagal memuat pengaturan:", error);
+      } finally {
+        setIsFetching(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  // Handle Simpan Perubahan
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
+<<<<<<< HEAD
     // Simulasi Save ke Database
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -34,6 +77,29 @@ export default function SettingsForm() {
     setIsLoading(false);
   };
 
+=======
+    try {
+      await saveSettings(formData);
+      alert("Pengaturan berhasil disimpan!");
+    } catch (error) {
+      console.error(error);
+      alert("Gagal menyimpan pengaturan. Pastikan Anda sudah login.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Tampilan Loading Awal
+  if (isFetching) {
+    return (
+      <div className="flex h-40 items-center justify-center text-zinc-500">
+        <Loader2 className="animate-spin mr-2 h-5 w-5" />
+        Memuat pengaturan...
+      </div>
+    );
+  }
+
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
   return (
     <form onSubmit={handleSave} className='space-y-6'>
       {/* Kartu Profil Restoran */}
@@ -57,6 +123,10 @@ export default function SettingsForm() {
                 setFormData({ ...formData, restaurantName: e.target.value })
               }
               placeholder='Contoh: Kopi Senja'
+<<<<<<< HEAD
+=======
+              required
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
             />
           </div>
           <div className='space-y-2'>
@@ -71,6 +141,10 @@ export default function SettingsForm() {
                   setFormData({ ...formData, whatsappNumber: e.target.value })
                 }
                 placeholder='628...'
+<<<<<<< HEAD
+=======
+                required
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
               />
             </div>
             <p className='text-[11px] text-zinc-500'>
@@ -135,6 +209,10 @@ export default function SettingsForm() {
         </CardContent>
       </Card>
 
+<<<<<<< HEAD
+=======
+      {/* Tombol Simpan */}
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5
       <div className='flex justify-end'>
         <Button
           type='submit'
@@ -151,4 +229,8 @@ export default function SettingsForm() {
       </div>
     </form>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> a77c2d3054bb3e2859d7153bc55913dc488845e5

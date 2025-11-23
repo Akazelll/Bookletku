@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
+<<<<<<< Updated upstream
 import { MenuItem, CATEGORIES } from "@/types/menu";
 import {
   Minus,
@@ -12,13 +13,22 @@ import {
   Globe,
   Trash2,
 } from "lucide-react";
+=======
+import { MenuItem, CATEGORIES, RestaurantProfile } from "@/types/menu";
+import { Minus, Plus, Send, ShoppingBag, Utensils, Globe, Trash2 } from "lucide-react";
+>>>>>>> Stashed changes
 import { logEvent } from "@/services/analytics-service";
 
 // --- KAMUS BAHASA ---
 const TRANSLATIONS = {
   id: {
+<<<<<<< Updated upstream
     title: "Bookletku Resto",
     subtitle: "Digital Menu",
+=======
+    defaultTitle: "Bookletku Resto",
+    defaultDesc: "Digital Menu",
+>>>>>>> Stashed changes
     openHours: "Buka Setiap Hari: 10:00 - 22:00",
     all: "Semua",
     emptyCategory: "Menu tidak ditemukan di kategori ini.",
@@ -36,8 +46,13 @@ const TRANSLATIONS = {
     pleaseProcess: "Mohon diproses ya!",
   },
   en: {
+<<<<<<< Updated upstream
     title: "Bookletku Resto",
     subtitle: "Digital Menu",
+=======
+    defaultTitle: "Bookletku Resto",
+    defaultDesc: "Digital Menu",
+>>>>>>> Stashed changes
     openHours: "Open Daily: 10:00 AM - 10:00 PM",
     all: "All",
     emptyCategory: "No items found in this category.",
@@ -56,55 +71,92 @@ const TRANSLATIONS = {
   },
 };
 
+<<<<<<< Updated upstream
 const WA_NUMBER = "6281234567890";
 
+=======
+>>>>>>> Stashed changes
 interface MenuPublicProps {
   initialMenus: MenuItem[];
-  initialTheme: string;
+  profile?: RestaurantProfile;
 }
 
 export default function MenuPublic({
   initialMenus,
-  initialTheme,
+  profile,
 }: MenuPublicProps) {
   const [menus] = useState<MenuItem[]>(initialMenus);
+<<<<<<< Updated upstream
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [cart, setCart] = useState<{ [key: string]: number }>({});
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
   // Theme & Lang
+=======
+  
+  // State & Language
+>>>>>>> Stashed changes
   const [lang, setLang] = useState<"id" | "en">("id");
   const t = TRANSLATIONS[lang];
+  
+  const [selectedCategory, setSelectedCategory] = useState(t.all);
+  const [cart, setCart] = useState<{ [key: string]: number }>({});
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
+<<<<<<< Updated upstream
   // Update selectedCategory default saat load/ganti bahasa
+=======
+  // Gunakan data dari Profile atau Fallback ke Default
+  const themeName = profile?.theme || "minimalist";
+  const storeName = profile?.restaurantName || t.defaultTitle;
+  const storeDesc = profile?.description || t.defaultDesc;
+  const rawWA = profile?.whatsappNumber || "6281234567890";
+  const waNumber = rawWA.replace(/\D/g, "").replace(/^0/, "62"); 
+  const logoUrl = profile?.logoUrl;
+
+  // Update selectedCategory saat bahasa berubah
+>>>>>>> Stashed changes
   useEffect(() => {
     setSelectedCategory(t.all);
   }, [lang, t.all]);
 
+<<<<<<< Updated upstream
   // --- ANALYTICS: Track Page View ---
+=======
+  // Analytics: Track Page View
+>>>>>>> Stashed changes
   useEffect(() => {
     logEvent("page_view");
   }, []);
 
+<<<<<<< Updated upstream
   // --- ANALYTICS: Track Add To Cart ---
+=======
+  // Fungsi helper untuk log event
+>>>>>>> Stashed changes
   const trackAddToCart = (item: MenuItem) => {
     if (item.id) {
       logEvent("add_to_cart", item.id);
     }
   };
 
-  // Logic Keranjang
+  // Cart Logic
   const updateCart = (item: MenuItem, delta: number) => {
     if (!item.id) return;
-
     setCart((prev) => {
       const newCount = (prev[item.id!] || 0) + delta;
       const newCart = { ...prev };
       if (newCount > 0) {
+<<<<<<< Updated upstream
         // Jika user menambah item (bukan mengurangi), catat event
         if (delta > 0) {
           trackAddToCart(item);
         }
+=======
+        // MODIFIKASI: Tracking add_to_cart DIHAPUS dari sini
+        // agar analitik hanya mencatat saat checkout/pesan via WA.
+        // if (delta > 0) trackAddToCart(item); <--- Dihapus
+>>>>>>> Stashed changes
         newCart[item.id!] = newCount;
       } else {
         delete newCart[item.id!];
@@ -115,16 +167,33 @@ export default function MenuPublic({
 
   const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
   const totalPrice = menus.reduce((total, item) => {
+<<<<<<< Updated upstream
     if (!item.id) return total;
     return total + item.price * (cart[item.id] || 0);
+=======
+    return total + item.price * (cart[item.id!] || 0);
+>>>>>>> Stashed changes
   }, 0);
 
   const cartItemsList = menus.filter((m) => m.id && cart[m.id]);
 
   const handleCheckout = () => {
     if (cartItemsList.length === 0) return;
+
+    // --- MODIFIKASI: TRACKING SAAT CHECKOUT ---
+    // Catat event 'add_to_cart' untuk setiap item yang dipesan
+    cartItemsList.forEach((item) => {
+      const qty = cart[item.id!];
+      // Loop sebanyak quantity untuk mencatat volume penjualan yang akurat
+      for (let i = 0; i < qty; i++) {
+        trackAddToCart(item);
+      }
+    });
+
+    // Konstruksi pesan WhatsApp
     let message = `${t.greeting}\n\n`;
     cartItemsList.forEach((item) => {
+<<<<<<< Updated upstream
       if (!item.id) return;
       message += `- ${item.name} (${
         cart[item.id]
@@ -173,17 +242,99 @@ export default function MenuPublic({
               </h1>
               <p className='text-[10px] uppercase tracking-wider text-zinc-500 font-medium'>
                 {t.subtitle}
+=======
+      message += `- ${item.name} (${cart[item.id!]}) x Rp${item.price.toLocaleString("id-ID")}\n`;
+    });
+    message += `\n*${t.total}: Rp ${totalPrice.toLocaleString("id-ID")}*`;
+    message += `\n\n${t.pleaseProcess}`;
+    
+    const url = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank");
+  };
+
+  const filteredMenus = selectedCategory === t.all
+    ? menus
+    : menus.filter((m) => m.category === selectedCategory);
+
+  // --- THEME CONFIGURATION ---
+  const isColorful = themeName === "colorful";
+
+  const theme = {
+    pageBg: isColorful ? "bg-orange-50/60" : "bg-zinc-50",
+    navBorder: isColorful ? "border-orange-100/50" : "border-zinc-200",
+    logoBg: isColorful 
+      ? "bg-gradient-to-br from-orange-500 to-red-600 shadow-orange-500/20" 
+      : "bg-black",
+    titleText: isColorful
+      ? "text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600"
+      : "text-zinc-900",
+    activeTab: isColorful
+      ? "bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg shadow-orange-500/30 border-transparent"
+      : "bg-black text-white shadow-zinc-900/20 border-transparent",
+    inactiveTab: isColorful
+      ? "bg-white text-zinc-600 border-orange-100 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-700"
+      : "bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-100",
+    cardBorder: isColorful
+      ? "border-orange-100/60 hover:border-orange-200 hover:shadow-xl hover:shadow-orange-500/10"
+      : "border-zinc-100 hover:border-zinc-200 hover:shadow-xl hover:shadow-zinc-200/50",
+    priceText: isColorful ? "text-orange-600" : "text-black",
+    addButton: isColorful
+      ? "bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white shadow-md shadow-orange-500/20"
+      : "bg-zinc-900 hover:bg-black text-white",
+    counterBtn: isColorful
+      ? "bg-gradient-to-br from-orange-500 to-red-600" 
+      : "bg-black",
+    checkoutBtn: isColorful
+      ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg shadow-green-500/30"
+      : "bg-zinc-900 hover:bg-black text-white",
+    cartIcon: isColorful ? "text-orange-600" : "text-black",
+    floatingCart: isColorful
+      ? "bg-gradient-to-r from-green-600 to-emerald-600 shadow-green-900/30 border-green-500/50"
+      : "bg-zinc-900 shadow-zinc-900/30 border-zinc-700/50"
+  };
+
+  return (
+    <div className={`min-h-screen font-sans text-zinc-900 ${theme.pageBg} ${isColorful ? "selection:bg-orange-100 selection:text-orange-900" : ""}`}>
+      {/* NAVBAR */}
+      <nav className={`bg-white/80 backdrop-blur-md border-b sticky top-0 z-30 shadow-sm h-16 ${theme.navBorder}`}>
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between'>
+          <div className='flex items-center gap-3'>
+            {logoUrl ? (
+              <div className="w-10 h-10 relative rounded-xl overflow-hidden shadow-sm border border-zinc-100">
+                <Image src={logoUrl} alt="Logo" fill className="object-cover" />
+              </div>
+            ) : (
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm transition-all hover:scale-105 ${theme.logoBg}`}>
+                <Utensils className='w-5 h-5' />
+              </div>
+            )}
+            
+            <div>
+              <h1 className={`text-lg font-bold leading-tight tracking-tight ${theme.titleText}`}>
+                {storeName}
+              </h1>
+              <p className='text-[10px] uppercase tracking-wider text-zinc-500 font-medium line-clamp-1 max-w-[200px]'>
+                {storeDesc}
+>>>>>>> Stashed changes
               </p>
             </div>
           </div>
           <div className='flex items-center gap-3'>
             <button
               onClick={() => setLang(lang === "id" ? "en" : "id")}
+<<<<<<< Updated upstream
               className='flex items-center gap-1 px-3 py-1.5 rounded-full bg-zinc-100 hover:bg-zinc-200 text-xs font-bold transition-colors'
             >
               <Globe className='w-3.5 h-3.5' /> {lang.toUpperCase()}
             </button>
             <div className='hidden md:block text-sm font-medium text-zinc-500 bg-zinc-100 px-3 py-1 rounded-full'>
+=======
+              className='flex items-center gap-1 px-3 py-1.5 rounded-full bg-zinc-100/80 hover:bg-zinc-200 text-xs font-bold transition-colors border border-transparent hover:border-zinc-300'
+            >
+              <Globe className='w-3.5 h-3.5' /> {lang.toUpperCase()}
+            </button>
+            <div className='hidden md:block text-sm font-medium text-zinc-500 bg-zinc-100/80 px-3 py-1 rounded-full'>
+>>>>>>> Stashed changes
               {t.openHours}
             </div>
           </div>
@@ -194,6 +345,7 @@ export default function MenuPublic({
       <div className='max-w-7xl mx-auto flex flex-col lg:flex-row items-start pt-4 lg:pt-8 gap-8 px-4 sm:px-6 lg:px-8'>
         {/* MENU LIST */}
         <div className='flex-1 w-full min-h-[80vh] pb-32 lg:pb-10'>
+<<<<<<< Updated upstream
           <div className='sticky top-[72px] z-20 bg-zinc-50/95 backdrop-blur-sm py-2 mb-6 -mx-4 px-4 lg:mx-0 lg:px-0 border-b border-zinc-200/50 lg:border-none'>
             <div className='flex gap-2 overflow-x-auto no-scrollbar pb-2'>
               <button
@@ -202,6 +354,17 @@ export default function MenuPublic({
                   selectedCategory === t.all
                     ? `${activeTabClass} shadow-lg`
                     : "bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100"
+=======
+          {/* Category Tabs */}
+          <div className={`sticky top-[72px] z-20 py-3 mb-6 -mx-4 px-4 lg:mx-0 lg:px-0 backdrop-blur-sm ${isColorful ? 'bg-orange-50/80' : 'bg-zinc-50/95'} lg:bg-transparent lg:backdrop-blur-none border-b ${theme.navBorder} lg:border-none`}>
+            <div className='flex gap-2 overflow-x-auto no-scrollbar pb-1'>
+              <button
+                onClick={() => setSelectedCategory(t.all)}
+                className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-semibold transition-all active:scale-95 ${
+                  selectedCategory === t.all
+                    ? theme.activeTab
+                    : `${theme.inactiveTab} border`
+>>>>>>> Stashed changes
                 }`}
               >
                 {t.all}
@@ -210,10 +373,17 @@ export default function MenuPublic({
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
+<<<<<<< Updated upstream
                   className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-semibold transition-all ${
                     selectedCategory === cat
                       ? `${activeTabClass} shadow-lg`
                       : "bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100"
+=======
+                  className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-semibold transition-all active:scale-95 ${
+                    selectedCategory === cat
+                      ? theme.activeTab
+                      : `${theme.inactiveTab} border`
+>>>>>>> Stashed changes
                   }`}
                 >
                   {cat}
@@ -234,7 +404,11 @@ export default function MenuPublic({
               {filteredMenus.map((menu) => (
                 <div
                   key={menu.id}
+<<<<<<< Updated upstream
                   className='group bg-white rounded-2xl border border-zinc-100 shadow-sm hover:shadow-xl hover:shadow-zinc-200/50 hover:border-zinc-200 transition-all duration-300 overflow-hidden flex flex-row md:flex-col h-32 md:h-auto'
+=======
+                  className={`group bg-white rounded-2xl border shadow-sm transition-all duration-300 overflow-hidden flex flex-row md:flex-col h-32 md:h-auto ${theme.cardBorder}`}
+>>>>>>> Stashed changes
                 >
                   <div className='w-32 md:w-full h-full md:h-48 bg-zinc-100 flex-shrink-0 relative overflow-hidden'>
                     {menu.imageUrl ? (
@@ -244,7 +418,10 @@ export default function MenuPublic({
                         fill
                         sizes='(max-width: 768px) 30vw, (max-width: 1200px) 50vw, 33vw'
                         className='object-cover group-hover:scale-105 transition-transform duration-500'
+<<<<<<< Updated upstream
                         priority={false}
+=======
+>>>>>>> Stashed changes
                       />
                     ) : (
                       <div className='w-full h-full flex flex-col items-center justify-center text-zinc-300'>
@@ -254,15 +431,25 @@ export default function MenuPublic({
                         </span>
                       </div>
                     )}
+<<<<<<< Updated upstream
                     {menu.id && cart[menu.id] > 0 && (
                       <div className='hidden md:flex absolute top-3 right-3 bg-black/80 backdrop-blur text-white text-xs font-bold px-2 py-1 rounded-lg shadow-sm animate-in fade-in zoom-in z-10'>
                         {cart[menu.id]}x
+=======
+                    {cart[menu.id!] > 0 && (
+                      <div className='hidden md:flex absolute top-3 right-3 bg-black/80 backdrop-blur text-white text-xs font-bold px-2 py-1 rounded-lg shadow-sm animate-in fade-in zoom-in z-10'>
+                        {cart[menu.id!]}x
+>>>>>>> Stashed changes
                       </div>
                     )}
                   </div>
                   <div className='p-4 flex flex-col justify-between flex-1'>
                     <div>
+<<<<<<< Updated upstream
                       <h3 className='font-bold text-zinc-900 line-clamp-1 md:line-clamp-2 text-base md:text-lg mb-1'>
+=======
+                      <h3 className='font-bold text-zinc-900 line-clamp-1 md:line-clamp-2 text-base md:text-lg mb-1 group-hover:text-primary transition-colors'>
+>>>>>>> Stashed changes
                         {menu.name}
                       </h3>
                       <p className='text-xs text-zinc-500 line-clamp-2 leading-relaxed mb-3'>
@@ -270,6 +457,7 @@ export default function MenuPublic({
                       </p>
                     </div>
                     <div className='flex items-center justify-between mt-auto'>
+<<<<<<< Updated upstream
                       <span className={`font-bold text-base ${primaryText}`}>
                         Rp {menu.price.toLocaleString("id-ID")}
                       </span>
@@ -301,6 +489,46 @@ export default function MenuPublic({
                             t.add
                           )}
                         </button>
+=======
+                      <span className={`font-bold text-base ${theme.priceText}`}>
+                        Rp {menu.price.toLocaleString("id-ID")}
+                      </span>
+                      <div className='flex items-center gap-2'>
+                        {cart[menu.id!] ? (
+                          <>
+                            <button
+                              onClick={() => updateCart(menu, -1)}
+                              className='w-8 h-8 flex items-center justify-center bg-white border border-zinc-200 rounded-full text-zinc-700 hover:bg-zinc-50 active:scale-90 transition-all'
+                            >
+                              <Minus className='w-3 h-3' />
+                            </button>
+                            <span className='w-4 text-center text-sm font-bold text-zinc-900'>
+                              {cart[menu.id!]}
+                            </span>
+                            <button
+                              onClick={() => updateCart(menu, 1)}
+                              className={`flex items-center justify-center rounded-full shadow-sm transition-all active:scale-90 ${
+                                cart[menu.id!]
+                                  ? `w-8 h-8 text-white hover:opacity-90 ${theme.counterBtn}`
+                                  : `px-4 py-1.5 text-xs font-bold ${theme.addButton}`
+                              }`}
+                            >
+                              {cart[menu.id!] ? (
+                                <Plus className='w-4 h-4' />
+                              ) : (
+                                t.add
+                              )}
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => updateCart(menu, 1)}
+                            className={`flex items-center justify-center rounded-full shadow-sm transition-all active:scale-90 px-4 py-1.5 text-xs font-bold ${theme.addButton}`}
+                          >
+                            {t.add}
+                          </button>
+                        )}
+>>>>>>> Stashed changes
                       </div>
                     </div>
                   </div>
@@ -315,7 +543,11 @@ export default function MenuPublic({
           <div className='bg-white rounded-2xl shadow-xl shadow-zinc-200/50 border border-zinc-100 overflow-hidden flex flex-col max-h-[calc(100vh-120px)]'>
             <div className='p-5 border-b border-zinc-100 bg-white'>
               <h2 className='text-lg font-bold flex items-center gap-2 text-zinc-900'>
+<<<<<<< Updated upstream
                 <ShoppingBag className={`w-5 h-5 ${primaryText}`} />{" "}
+=======
+                <ShoppingBag className={`w-5 h-5 ${theme.cartIcon}`} />{" "}
+>>>>>>> Stashed changes
                 {t.yourOrder}
               </h2>
             </div>
@@ -355,7 +587,11 @@ export default function MenuPublic({
                           onClick={() =>
                             setCart((prev) => {
                               const n = { ...prev };
+<<<<<<< Updated upstream
                               if (item.id) delete n[item.id];
+=======
+                              delete n[item.id!];
+>>>>>>> Stashed changes
                               return n;
                             })
                           }
@@ -376,7 +612,11 @@ export default function MenuPublic({
                             <Minus className='w-3 h-3' />
                           </button>
                           <span className='text-xs font-bold w-4 text-center'>
+<<<<<<< Updated upstream
                             {item.id ? cart[item.id] : 0}
+=======
+                            {cart[item.id!]}
+>>>>>>> Stashed changes
                           </span>
                           <button
                             onClick={() => updateCart(item, 1)}
@@ -405,11 +645,15 @@ export default function MenuPublic({
               <button
                 onClick={handleCheckout}
                 disabled={cartItemsList.length === 0}
+<<<<<<< Updated upstream
                 className={`w-full text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none transition-all transform active:scale-[0.98] ${
                   isColorful
                     ? "bg-green-600 hover:bg-green-700"
                     : "bg-zinc-900 hover:bg-black"
                 }`}
+=======
+                className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none ${theme.checkoutBtn}`}
+>>>>>>> Stashed changes
               >
                 <Send className='w-4 h-4' />
                 {t.checkoutWA}
@@ -424,11 +668,15 @@ export default function MenuPublic({
             <div className='w-full max-w-md'>
               <button
                 onClick={() => setIsMobileCartOpen(true)}
+<<<<<<< Updated upstream
                 className={`w-full text-white p-3 pl-4 pr-5 rounded-2xl shadow-2xl flex justify-between items-center active:scale-95 transition-all border border-zinc-700/50 backdrop-blur-sm ${
                   isColorful
                     ? "bg-green-600 shadow-green-900/30"
                     : "bg-zinc-900 shadow-zinc-900/30"
                 }`}
+=======
+                className={`w-full text-white p-3 pl-4 pr-5 rounded-2xl shadow-2xl flex justify-between items-center active:scale-95 transition-all border backdrop-blur-md ${theme.floatingCart}`}
+>>>>>>> Stashed changes
               >
                 <div className='flex items-center gap-3'>
                   <div className='bg-white/20 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm backdrop-blur-md'>
@@ -436,7 +684,11 @@ export default function MenuPublic({
                   </div>
                   <div className='flex flex-col items-start'>
                     <span className='font-bold text-sm'>{t.viewCart}</span>
+<<<<<<< Updated upstream
                     <span className='text-[10px] text-zinc-200 font-medium'>
+=======
+                    <span className='text-[10px] text-zinc-100/90 font-medium'>
+>>>>>>> Stashed changes
                       {totalItems} {t.itemsSelected}
                     </span>
                   </div>
@@ -453,7 +705,14 @@ export default function MenuPublic({
 
         {/* MOBILE CART MODAL */}
         {isMobileCartOpen && (
+<<<<<<< Updated upstream
           <div className='lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px] flex items-end justify-center animate-in fade-in duration-200'>
+=======
+          <div
+            className='lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px] flex items-end justify-center animate-in fade-in duration-200'
+            onClick={(e) => e.stopPropagation()}
+          >
+>>>>>>> Stashed changes
             <div
               className='bg-white w-full max-w-md rounded-t-[32px] p-6 max-h-[85vh] flex flex-col animate-in slide-in-from-bottom-full duration-300 shadow-[0_-8px_30px_rgba(0,0,0,0.12)]'
               onClick={(e) => e.stopPropagation()}
@@ -463,7 +722,11 @@ export default function MenuPublic({
               </div>
               <div className='flex justify-between items-center mb-6'>
                 <h2 className='text-xl font-bold text-zinc-900 flex items-center gap-2'>
+<<<<<<< Updated upstream
                   <ShoppingBag className={`w-5 h-5 ${primaryText}`} />{" "}
+=======
+                  <ShoppingBag className={`w-5 h-5 ${theme.cartIcon}`} />{" "}
+>>>>>>> Stashed changes
                   {t.yourOrder}
                 </h2>
                 <button
@@ -481,7 +744,11 @@ export default function MenuPublic({
                   >
                     <div className='flex gap-4 items-center'>
                       <div className='bg-white w-10 h-10 rounded-lg flex items-center justify-center font-bold text-zinc-900 border border-zinc-200 shadow-sm'>
+<<<<<<< Updated upstream
                         {item.id ? cart[item.id] : 0}x
+=======
+                        {cart[item.id!]}x
+>>>>>>> Stashed changes
                       </div>
                       <div>
                         <div className='text-sm font-bold text-zinc-900 line-clamp-1'>
@@ -493,10 +760,14 @@ export default function MenuPublic({
                       </div>
                     </div>
                     <div className='font-bold text-zinc-900'>
+<<<<<<< Updated upstream
                       Rp
                       {(
                         item.price * (item.id ? cart[item.id] : 0)
                       ).toLocaleString("id-ID")}
+=======
+                      Rp{(item.price * cart[item.id!]).toLocaleString("id-ID")}
+>>>>>>> Stashed changes
                     </div>
                   </div>
                 ))}
@@ -513,7 +784,11 @@ export default function MenuPublic({
               </div>
               <button
                 onClick={handleCheckout}
+<<<<<<< Updated upstream
                 className='w-full bg-green-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-green-700 active:scale-[0.98] transition-all shadow-lg shadow-green-600/20'
+=======
+                className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${theme.checkoutBtn}`}
+>>>>>>> Stashed changes
               >
                 <Send className='w-5 h-5' />
                 {t.checkoutWA}

@@ -18,42 +18,59 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isLogin, setIsLogin] = useState(true); // Toggle Login/Register
+  const [isLogin, setIsLogin] = useState(true);
   const router = useRouter();
   const supabase = createClient();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    // --- PERBAIKAN UTAMA: TRIM EMAIL ---
-    // Menghapus spasi yang tidak sengaja terbawa di awal/akhir
     const cleanEmail = email.trim();
 
     try {
       if (isLogin) {
-        // LOGIN
-        const { error } = await supabase.auth.signInWithPassword({
+        // --- LOGIKA LOGIN ---
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
           email: cleanEmail,
           password,
         });
-        if (error) throw error;
-        
-        router.push("/admin/dashboard");
-        router.refresh();
+        if (authError) throw authError;
+
+        if (authData.user) {
+          // Cek Role user ini di database
+          const { data: roleData, error: roleError } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", authData.user.id)
+            .single();
+
+          // Jika error atau role kosong, anggap sebagai 'user' biasa
+          const role = roleData?.role || "user";
+
+          // Redirect sesuai role
+          if (role === "owner" || role === "admin") {
+            router.push("/admin/dashboard");
+          } else {
+            router.push("/menu/public");
+          }
+          router.refresh();
+        }
+
       } else {
-        // REGISTER
-        const { error } = await supabase.auth.signUp({
+        // --- LOGIKA REGISTER ---
+        // 1. Buat Akun Auth
+        const { error: signUpError } = await supabase.auth.signUp({
           email: cleanEmail,
           password,
         });
-        if (error) throw error;
         
-        alert("Registrasi berhasil! Silakan cek email Anda untuk verifikasi (jika diaktifkan) atau langsung login.");
+        if (signUpError) throw signUpError;
+        
+        alert("Registrasi berhasil! Silakan login.");
         setIsLogin(true);
       }
     } catch (error: any) {
-      alert(error.message);
+      alert(error.message || "Terjadi kesalahan.");
     } finally {
       setIsLoading(false);
     }
@@ -63,9 +80,9 @@ export default function LoginPage() {
     <div className='min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-black p-4'>
       <Card className='w-full max-w-md border-zinc-200 dark:border-zinc-800'>
         <CardHeader className='text-center'>
-          <CardTitle>{isLogin ? "Login Admin" : "Daftar Akun"}</CardTitle>
+          <CardTitle>{isLogin ? "Login System" : "Daftar Akun"}</CardTitle>
           <CardDescription>
-            Masuk untuk mengelola menu digital Anda.
+            {isLogin ? "Masuk untuk mengelola restoran atau memesan." : "Buat akun baru untuk mulai memesan."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -97,13 +114,12 @@ export default function LoginPage() {
               )}
             </Button>
             <div className='text-center text-sm text-zinc-500'>
-              {isLogin ? "Belum punya akun? " : "Sudah punya akun? "}
               <button
                 type='button'
                 onClick={() => setIsLogin(!isLogin)}
                 className='text-blue-600 hover:underline font-medium'
               >
-                {isLogin ? "Daftar sekarang" : "Login di sini"}
+                {isLogin ? "Belum punya akun? Daftar" : "Sudah punya akun? Login"}
               </button>
             </div>
           </form>

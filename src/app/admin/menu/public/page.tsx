@@ -24,5 +24,5 @@ export default async function PublicMenuPage() {
     createdAt: new Date(item.created_at).getTime(),
   }));
 
-  return <MenuPublic initialMenus={menus} initialTheme='minimalist' />;
+  return <MenuPublic initialMenus={menus} />;
 }

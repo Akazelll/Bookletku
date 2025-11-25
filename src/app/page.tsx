@@ -391,7 +391,7 @@ export default function App() {
               dan pesan langsung via WhatsApp tanpa perlu aplikasi.
             </p>
             <div className='flex justify-center lg:justify-start gap-4'>
-              <Link href='/login'>
+              <Link href='/register'>
                 <Button size='md'>Coba Gratis Sekarang</Button>
               </Link>
               <Link href='#demo'>
@@ -492,7 +492,7 @@ export default function App() {
               </ul>
 
               <div className='mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start'>
-                <Link href='/login'>
+                <Link href='/register'>
                   <Button size='md'>Daftar Sekarang</Button>
                 </Link>
                 <Link href='#fitur'>
@@ -575,7 +575,7 @@ export default function App() {
                 Bergabung dengan ratusan pemilik bisnis kuliner lainnya. Daftar
                 sekarang, GRATIS selamanya untuk fitur dasar.
               </p>
-              <Link href='/login'>
+              <Link href='/register'>
                 <Button size='lg' className='cta-button-white'>
                   Mulai Gratis Sekarang!
                 </Button>
@@ -586,7 +586,7 @@ export default function App() {
       </section>
 
       {/* --- FOOTER --- */}
-      <footer className='border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pt-16 pb-8'>
+      <footer className='border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pt-16 pb-8' id="kontak">
         <div className='container mx-auto px-4 lg:px-8 max-w-7xl'>
           <div className='grid grid-cols-2 md:grid-cols-5 gap-8 mb-12'>
             {/* Logo and Tagline */}

@@ -25,6 +25,9 @@ export const getSettings = async (): Promise<RestaurantProfile | null> => {
     restaurantName: data.restaurant_name,
     whatsappNumber: data.whatsapp_number,
     theme: data.theme,
+    slug: data.slug,               // Mapping baru
+    logoUrl: data.logo_url,        // Mapping baru
+    description: data.description, // Mapping baru
   };
 };
 
@@ -37,9 +40,29 @@ export const saveSettings = async (settings: Partial<RestaurantProfile>) => {
     restaurant_name: settings.restaurantName,
     whatsapp_number: settings.whatsappNumber,
     theme: settings.theme,
+    slug: settings.slug,               // Simpan baru
+    logo_url: settings.logoUrl,        // Simpan baru
+    description: settings.description, // Simpan baru
     updated_at: new Date().toISOString(),
   };
 
   const { error } = await supabase.from("profiles").upsert(payload);
   if (error) throw error;
+};
+
+// Fungsi baru untuk upload logo
+export const uploadLogo = async (file: File): Promise<string> => {
+  const fileExt = file.name.split(".").pop();
+  const fileName = `logo-${Date.now()}.${fileExt}`;
+  const filePath = `${fileName}`;
+
+  // Upload ke bucket 'logos'
+  const { error: uploadError } = await supabase.storage
+    .from("logos") 
+    .upload(filePath, file, { upsert: true });
+
+  if (uploadError) throw uploadError;
+
+  const { data: { publicUrl } } = supabase.storage.from("logos").getPublicUrl(filePath);
+  return publicUrl;
 };

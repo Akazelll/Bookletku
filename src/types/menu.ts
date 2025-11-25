@@ -15,6 +15,9 @@ export type RestaurantProfile = {
   restaurantName: string;
   whatsappNumber: string;
   theme: string;
+  slug?: string;
+  logoUrl?: string;
+  description?: string;
 };
 
 export const CATEGORIES = [

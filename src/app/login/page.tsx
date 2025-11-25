@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // Import useRouter
-import { createClient } from "@/lib/supabase/client"; // Import Supabase Client
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { Utensils, Mail, Lock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,8 +17,8 @@ import {
 } from "@/components/ui/card";
 
 export default function LoginPage() {
-  const router = useRouter(); // Inisialisasi router
-  const supabase = createClient(); // Inisialisasi Supabase
+  const router = useRouter();
+  const supabase = createClient();
 
   const [isLoading, setIsLoading] = React.useState(false);
   const [email, setEmail] = React.useState("");
@@ -29,7 +29,6 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // 1. Login ke Supabase
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -39,10 +38,7 @@ export default function LoginPage() {
         throw error;
       }
 
-      // 2. Jika sukses, refresh router agar middleware mengenali session baru
       router.refresh();
-
-      // 3. Redirect ke Dashboard
       router.push("/admin/dashboard");
     } catch (error: any) {
       alert("Gagal Login: " + error.message);
@@ -53,7 +49,10 @@ export default function LoginPage() {
 
   return (
     <div className='relative flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black p-4 overflow-hidden'>
-      {/* ... (Bagian ornamen background biarkan sama) ... */}
+      {/* Ornamen Background */}
+      <div className='absolute -top-20 -left-10 w-96 h-96 bg-white dark:bg-zinc-800 rounded-full filter blur-3xl opacity-40 dark:opacity-20'></div>
+      <div className='absolute bottom-0 -right-20 w-80 h-80 bg-zinc-200 dark:bg-zinc-700 rounded-full filter blur-3xl opacity-40 dark:opacity-20'></div>
+      <div className='absolute bottom-1/4 left-1/4 w-60 h-60 bg-blue-200 dark:bg-blue-900 rounded-full filter blur-3xl opacity-30 dark:opacity-10'></div>
 
       <Card className='z-10 w-full max-w-sm p-0 border-zinc-200 dark:border-zinc-800 shadow-xl backdrop-blur-md bg-white/80 dark:bg-black/80'>
         <CardHeader className='text-center border-b border-zinc-100 dark:border-zinc-800 pb-4'>

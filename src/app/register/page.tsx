@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Utensils, Mail, Lock, Loader2 } from "lucide-react";
+import { Utensils, Mail, Lock, Store, Loader2 } from "lucide-react";
 // Import komponen UI yang sudah ada di proyek Anda
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +15,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [isLoading, setIsLoading] = React.useState(false);
+  // State untuk menyimpan nilai input
+  const [restaurantName, setRestaurantName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
 
@@ -25,23 +27,22 @@ export default function LoginPage() {
     setIsLoading(true);
 
     // **********************************************
-    // INI ADALAH KODE SIMULASI (DUMMY AUTHENTICATION)
-    // Akan diganti dengan logika autentikasi (misalnya Supabase)
+    // INI ADALAH KODE SIMULASI (DUMMY REGISTRATION)
     // **********************************************
     setTimeout(() => {
       setIsLoading(false);
-      console.log("Simulasi Login Berhasil. Arahkan ke Dashboard.");
       alert(
-        `Simulasi Login Berhasil!\nEmail: ${email}\nPassword: ${password}\nCek console log untuk detail.`
+        `Simulasi Registrasi Berhasil!\nNama Resto: ${restaurantName}\nEmail: ${email}\nSekarang Anda bisa login.`
       );
-    }, 1500);
+      console.log("Simulasi Registrasi Berhasil.");
+    }, 2000);
   };
 
   return (
     // Menggunakan layout full screen dengan centering dan ornamen background statis
     <div className="relative flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black p-4 overflow-hidden">
       {/* ==================================== */}
-      {/* ORNAMEN BACKGROUND MONOKROM STATIS */}
+      {/* ORNAMEN BACKGROUND MONOKROM STATIS (Sama seperti halaman login) */}
       {/* ==================================== */}
       <div
         // Lingkaran Besar Kiri Atas
@@ -57,7 +58,7 @@ export default function LoginPage() {
       ></div>
       {/* ==================================== */}
 
-      {/* Card Login Utama */}
+      {/* Card Registrasi Utama */}
       <Card className="z-10 w-full max-w-sm p-0 border-zinc-200 dark:border-zinc-800 shadow-xl backdrop-blur-md bg-white/80 dark:bg-black/80">
         {/* Header Card (Logo dan Judul) */}
         <CardHeader className="text-center border-b border-zinc-100 dark:border-zinc-800 pb-4">
@@ -67,16 +68,34 @@ export default function LoginPage() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight">
-            Masuk ke Bookletku
+            Daftar Akun Baru
           </CardTitle>
           <CardDescription>
-            Masukkan email dan password untuk melanjutkan ke Dashboard Admin.
+            Buat akun untuk mulai mengelola menu digital restoran Anda.
           </CardDescription>
         </CardHeader>
 
-        {/* Konten Card (Formulir Login) */}
+        {/* Konten Card (Formulir Registrasi) */}
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Nama Restoran Field */}
+            <div className="space-y-2">
+              <Label htmlFor="restaurantName">Nama Restoran</Label>
+              <div className="relative">
+                <Store className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
+                <Input
+                  id="restaurantName"
+                  type="text"
+                  placeholder="Contoh: Restoran Enak Jaya"
+                  required
+                  className="pl-10"
+                  disabled={isLoading}
+                  value={restaurantName}
+                  onChange={(e) => setRestaurantName(e.target.value)}
+                />
+              </div>
+            </div>
+
             {/* Email Field */}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -122,29 +141,20 @@ export default function LoginPage() {
               {isLoading ? (
                 <Loader2 className="animate-spin mr-2 h-4 w-4" />
               ) : null}
-              {isLoading ? "Memproses..." : "Masuk"}
+              {isLoading ? "Mendaftar..." : "Daftar Akun"}
             </Button>
           </form>
 
           {/* Link Tambahan */}
           <div className="mt-6 text-center text-sm space-y-2">
             <p className="text-zinc-500 dark:text-zinc-400">
-              Lupa password?{" "}
+              Sudah punya akun?{" "}
+              {/* TAUTAN SUDAH BENAR, MENGARAH KE HALAMAN LOGIN */}
               <Link
-                href="#" // Link ini tetap hash/placeholder
+                href="/login"
                 className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
               >
-                Reset di sini
-              </Link>
-            </p>
-            <p className="text-zinc-500 dark:text-zinc-400">
-              Belum punya akun?{" "}
-              {/* PERBAIKAN: Link diarahkan ke halaman register di path /register */}
-              <Link
-                href="/register"
-                className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-              >
-                Daftar Sekarang
+                Masuk di sini
               </Link>
             </p>
             <p>

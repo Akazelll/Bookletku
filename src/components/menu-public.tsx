@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
-import { MenuItem, CATEGORIES } from "@/types/menu";
+import { MenuItem, CATEGORIES, RestaurantProfile } from "@/types/menu"; // Pastikan import RestaurantProfile
 import {
   Minus,
   Plus,
@@ -68,17 +68,14 @@ const CATEGORY_LABELS: Record<string, { id: string; en: string }> = {
   "Paket Hemat": { id: "Paket Hemat", en: "Value Meals" },
 };
 
-const WA_NUMBER = "6281234567890";
-
+// --- UPDATE INTERFACE PROPS ---
 interface MenuPublicProps {
   initialMenus: MenuItem[];
-  initialTheme: string;
+  profile?: RestaurantProfile | null; // Tambahkan ini agar tidak error saat build
+  initialTheme?: string; // Opsional, untuk backward compatibility
 }
 
-export default function MenuPublic({
-  initialMenus,
-  initialTheme,
-}: MenuPublicProps) {
+export default function MenuPublic({ initialMenus, profile }: MenuPublicProps) {
   const [menus] = useState<MenuItem[]>(initialMenus);
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [cart, setCart] = useState<{ [key: string]: number }>({});
@@ -88,6 +85,11 @@ export default function MenuPublic({
 
   const [lang, setLang] = useState<"id" | "en">("id");
   const t = TRANSLATIONS[lang];
+
+  // --- DATA DINAMIS DARI PROFILE ---
+  const theme = profile?.theme || "minimalist";
+  const restaurantName = profile?.restaurantName || "Bookletku Resto";
+  const whatsappNumber = profile?.whatsappNumber || "6281234567890";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -156,7 +158,8 @@ export default function MenuPublic({
     message += `\n*${t.total}: Rp ${totalPrice.toLocaleString("id-ID")}*`;
     message += `\n\n${t.pleaseProcess}`;
 
-    const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(
+    // Gunakan nomor WA dinamis
+    const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
       message
     )}`;
     window.open(url, "_blank");
@@ -171,7 +174,8 @@ export default function MenuPublic({
     return matchCategory && matchSearch;
   });
 
-  const isColorful = initialTheme === "colorful";
+  // Style Logik
+  const isColorful = theme === "colorful";
 
   const activeTabClass = isColorful
     ? "bg-orange-600 text-white shadow-orange-200 shadow-md ring-2 ring-orange-100"
@@ -200,8 +204,9 @@ export default function MenuPublic({
               <ChefHat className='w-6 h-6' />
             </div>
             <div>
+              {/* Nama Restoran Dinamis */}
               <h1 className='text-lg font-bold leading-none tracking-tight'>
-                {t.title}
+                {restaurantName}
               </h1>
               <p className='text-xs font-medium text-zinc-500 mt-1 uppercase tracking-wider'>
                 {t.subtitle}
@@ -233,6 +238,7 @@ export default function MenuPublic({
         </div>
       </nav>
 
+      {/* --- Search & Categories --- */}
       <div className='pt-24 lg:pt-28 pb-6 px-4 sm:px-6 max-w-7xl mx-auto'>
         <div className='relative max-w-2xl mx-auto lg:mx-0 mb-8'>
           <div className='relative'>
@@ -277,6 +283,7 @@ export default function MenuPublic({
         </div>
       </div>
 
+      {/* --- Main Grid Content --- */}
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-10 items-start'>
         <div className='flex-1 w-full min-h-[50vh]'>
           {filteredMenus.length === 0 ? (
@@ -287,9 +294,6 @@ export default function MenuPublic({
               <h3 className='text-lg font-bold text-zinc-900'>
                 {t.emptyCategory}
               </h3>
-              <p className='text-zinc-500 text-sm mt-1 max-w-xs'>
-                Coba cari kata kunci lain atau ganti kategori menu ya.
-              </p>
             </div>
           ) : (
             <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6'>
@@ -398,6 +402,7 @@ export default function MenuPublic({
           )}
         </div>
 
+        {/* Sidebar Cart */}
         <aside className='hidden lg:block w-[380px] flex-shrink-0 sticky top-28 h-[calc(100vh-140px)]'>
           <div className='bg-white rounded-[32px] shadow-2xl shadow-zinc-200/50 border border-zinc-100 flex flex-col h-full overflow-hidden'>
             <div className='p-6 border-b border-zinc-100 bg-zinc-50/50 backdrop-blur-sm'>
@@ -518,6 +523,7 @@ export default function MenuPublic({
         </aside>
       </div>
 
+      {/* Mobile Floating Button */}
       {totalItems > 0 && !isMobileCartOpen && (
         <div className='lg:hidden fixed bottom-6 inset-x-4 z-50 animate-in slide-in-from-bottom-10 duration-500'>
           <button
@@ -540,6 +546,7 @@ export default function MenuPublic({
         </div>
       )}
 
+      {/* Mobile Drawer */}
       {isMobileCartOpen && (
         <>
           <div

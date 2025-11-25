@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { logEvent } from "@/services/analytics-service";
 
-// --- KAMUS BAHASA UI ---
 const TRANSLATIONS = {
   id: {
     title: "Bookletku Resto",
@@ -61,8 +60,6 @@ const TRANSLATIONS = {
   },
 };
 
-// --- KAMUS TERJEMAHAN KATEGORI ---
-// Key harus sama persis dengan yang ada di database / src/types/menu.ts
 const CATEGORY_LABELS: Record<string, { id: string; en: string }> = {
   "Makanan Utama": { id: "Makanan Utama", en: "Main Course" },
   Minuman: { id: "Minuman", en: "Drinks" },
@@ -83,18 +80,15 @@ export default function MenuPublic({
   initialTheme,
 }: MenuPublicProps) {
   const [menus] = useState<MenuItem[]>(initialMenus);
-  // Gunakan 'ALL' sebagai nilai internal untuk kategori "Semua" agar konsisten
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [cart, setCart] = useState<{ [key: string]: number }>({});
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Theme & Lang
   const [lang, setLang] = useState<"id" | "en">("id");
   const t = TRANSLATIONS[lang];
 
-  // Handle scroll effect for navbar
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
@@ -103,7 +97,6 @@ export default function MenuPublic({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Analytics
   useEffect(() => {
     logEvent("page_view");
   }, []);
@@ -114,7 +107,6 @@ export default function MenuPublic({
     }
   };
 
-  // Logic Keranjang
   const updateCart = (item: MenuItem, delta: number) => {
     if (!item.id) return;
 
@@ -133,7 +125,6 @@ export default function MenuPublic({
     });
   };
 
-  // Derived State
   const totalItems = useMemo(
     () => Object.values(cart).reduce((a, b) => a + b, 0),
     [cart]
@@ -171,9 +162,6 @@ export default function MenuPublic({
     window.open(url, "_blank");
   };
 
-  // Filter Menu Logic
-  // Kita membandingkan selectedCategory (yang isinya teks Indonesia/Asli dari DB)
-  // dengan menu.category (yang juga teks Asli dari DB)
   const filteredMenus = menus.filter((menu) => {
     const matchCategory =
       selectedCategory === "ALL" || menu.category === selectedCategory;
@@ -183,10 +171,8 @@ export default function MenuPublic({
     return matchCategory && matchSearch;
   });
 
-  // Theme Config
   const isColorful = initialTheme === "colorful";
 
-  // Dynamic Classes based on theme
   const activeTabClass = isColorful
     ? "bg-orange-600 text-white shadow-orange-200 shadow-md ring-2 ring-orange-100"
     : "bg-zinc-900 text-white shadow-zinc-200 shadow-md ring-2 ring-zinc-100";
@@ -199,7 +185,6 @@ export default function MenuPublic({
 
   return (
     <div className='min-h-screen bg-white selection:bg-zinc-100 font-sans text-zinc-900 pb-24 lg:pb-0'>
-      {/* --- NAVBAR --- */}
       <nav
         className={`fixed top-0 inset-x-0 z-40 transition-all duration-300 border-b ${
           isScrolled
@@ -248,7 +233,6 @@ export default function MenuPublic({
         </div>
       </nav>
 
-      {/* --- HEADER & SEARCH --- */}
       <div className='pt-24 lg:pt-28 pb-6 px-4 sm:px-6 max-w-7xl mx-auto'>
         <div className='relative max-w-2xl mx-auto lg:mx-0 mb-8'>
           <div className='relative'>
@@ -263,10 +247,8 @@ export default function MenuPublic({
           </div>
         </div>
 
-        {/* CATEGORY TABS (Sticky) */}
         <div className='sticky top-[70px] md:top-[80px] z-30 bg-white/95 backdrop-blur-sm py-3 -mx-4 px-4 sm:mx-0 sm:px-0 border-b border-zinc-100 sm:border-none'>
           <div className='flex gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0'>
-            {/* Tombol ALL */}
             <button
               onClick={() => setSelectedCategory("ALL")}
               className={`whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300 active:scale-95 ${
@@ -278,7 +260,6 @@ export default function MenuPublic({
               {t.all}
             </button>
 
-            {/* Tombol Kategori Lainnya */}
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
@@ -289,7 +270,6 @@ export default function MenuPublic({
                     : "bg-zinc-50 text-zinc-600 border border-zinc-200 hover:bg-zinc-100 hover:border-zinc-300"
                 }`}
               >
-                {/* Ambil Label Terjemahan, jika tidak ada gunakan teks asli */}
                 {CATEGORY_LABELS[cat]?.[lang] || cat}
               </button>
             ))}
@@ -297,9 +277,7 @@ export default function MenuPublic({
         </div>
       </div>
 
-      {/* --- MAIN CONTENT (GRID) --- */}
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-10 items-start'>
-        {/* --- MENU LIST --- */}
         <div className='flex-1 w-full min-h-[50vh]'>
           {filteredMenus.length === 0 ? (
             <div className='flex flex-col items-center justify-center py-24 px-4 text-center border-2 border-dashed border-zinc-200 rounded-3xl bg-zinc-50/50'>
@@ -325,7 +303,6 @@ export default function MenuPublic({
                       qty > 0 ? "ring-1 ring-zinc-200 bg-zinc-50/30" : ""
                     }`}
                   >
-                    {/* Image Container */}
                     <div className='w-28 h-28 sm:w-full sm:h-52 bg-zinc-100 rounded-2xl overflow-hidden relative flex-shrink-0'>
                       {menu.imageUrl ? (
                         <Image
@@ -344,7 +321,6 @@ export default function MenuPublic({
                         </div>
                       )}
 
-                      {/* Badge Available */}
                       {!menu.isAvailable && (
                         <div className='absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10'>
                           <span className='bg-black text-white text-xs font-bold px-3 py-1 rounded-full'>
@@ -354,12 +330,10 @@ export default function MenuPublic({
                       )}
                     </div>
 
-                    {/* Info Container */}
                     <div className='flex flex-col justify-between flex-1 sm:pt-4 sm:px-2 pb-1'>
                       <div>
                         <div className='flex justify-between items-start mb-1'>
                           <span className='text-[10px] font-bold uppercase tracking-wider text-zinc-400'>
-                            {/* Terjemahkan Label Kategori di Kartu Menu juga */}
                             {CATEGORY_LABELS[menu.category]?.[lang] ||
                               menu.category}
                           </span>
@@ -382,7 +356,6 @@ export default function MenuPublic({
                           {menu.price.toLocaleString("id-ID")}
                         </div>
 
-                        {/* Add/Remove Button */}
                         <div className='flex items-center'>
                           {qty > 0 ? (
                             <div className='flex items-center bg-black rounded-full p-1 shadow-lg animate-in fade-in zoom-in duration-200'>
@@ -425,7 +398,6 @@ export default function MenuPublic({
           )}
         </div>
 
-        {/* --- CART SIDEBAR (DESKTOP) --- */}
         <aside className='hidden lg:block w-[380px] flex-shrink-0 sticky top-28 h-[calc(100vh-140px)]'>
           <div className='bg-white rounded-[32px] shadow-2xl shadow-zinc-200/50 border border-zinc-100 flex flex-col h-full overflow-hidden'>
             <div className='p-6 border-b border-zinc-100 bg-zinc-50/50 backdrop-blur-sm'>
@@ -546,7 +518,6 @@ export default function MenuPublic({
         </aside>
       </div>
 
-      {/* --- MOBILE FLOATING CART BUTTON --- */}
       {totalItems > 0 && !isMobileCartOpen && (
         <div className='lg:hidden fixed bottom-6 inset-x-4 z-50 animate-in slide-in-from-bottom-10 duration-500'>
           <button
@@ -569,7 +540,6 @@ export default function MenuPublic({
         </div>
       )}
 
-      {/* --- MOBILE CART DRAWER (SHEET) --- */}
       {isMobileCartOpen && (
         <>
           <div
@@ -577,7 +547,6 @@ export default function MenuPublic({
             onClick={() => setIsMobileCartOpen(false)}
           />
           <div className='lg:hidden fixed inset-x-0 bottom-0 z-[60] bg-white rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.2)] overflow-hidden flex flex-col max-h-[85vh] animate-in slide-in-from-bottom duration-300'>
-            {/* Drawer Handle */}
             <div
               className='w-full flex justify-center pt-3 pb-1 bg-white'
               onClick={() => setIsMobileCartOpen(false)}

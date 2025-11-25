@@ -1,8 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { MenuItem } from "@/types/menu";
 
-const supabase = createClient();
-
+// Helper untuk mapping data
 const mapToMenuItem = (data: any): MenuItem => ({
   id: data.id,
   name: data.name,
@@ -16,6 +15,7 @@ const mapToMenuItem = (data: any): MenuItem => ({
 });
 
 export const getMenus = async (): Promise<MenuItem[]> => {
+  const supabase = createClient(); // Inisialisasi client di sini
   const { data, error } = await supabase
     .from("menu_items")
     .select("*")
@@ -29,6 +29,7 @@ export const getMenus = async (): Promise<MenuItem[]> => {
 };
 
 export const getMenuById = async (id: string): Promise<MenuItem | null> => {
+  const supabase = createClient(); // Inisialisasi client di sini
   const { data, error } = await supabase
     .from("menu_items")
     .select("*")
@@ -40,10 +41,15 @@ export const getMenuById = async (id: string): Promise<MenuItem | null> => {
 };
 
 export const createMenu = async (menu: Partial<MenuItem>) => {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("User not authenticated");
+  const supabase = createClient(); // PENTING: Inisialisasi client di dalam fungsi
+  
+  // Cek session user
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  
+  if (authError || !user) {
+    console.error("Auth Error:", authError);
+    throw new Error("User not authenticated. Silakan login ulang.");
+  }
 
   const { data, error } = await supabase
     .from("menu_items")
@@ -64,6 +70,7 @@ export const createMenu = async (menu: Partial<MenuItem>) => {
 };
 
 export const updateMenu = async (id: string, updates: Partial<MenuItem>) => {
+  const supabase = createClient(); // Inisialisasi client di sini
   const { data, error } = await supabase
     .from("menu_items")
     .update({
@@ -83,15 +90,15 @@ export const updateMenu = async (id: string, updates: Partial<MenuItem>) => {
 };
 
 export const deleteMenu = async (id: string) => {
+  const supabase = createClient(); // Inisialisasi client di sini
   const { error } = await supabase.from("menu_items").delete().eq("id", id);
   if (error) throw error;
 };
 
 export const uploadMenuImage = async (file: File): Promise<string> => {
+  const supabase = createClient(); // Inisialisasi client di sini
   const fileExt = file.name.split(".").pop();
-  const fileName = `${Date.now()}-${Math.random()
-    .toString(36)
-    .substring(2)}.${fileExt}`;
+  const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
   const filePath = `menus/${fileName}`;
 
   const { error: uploadError } = await supabase.storage
@@ -100,8 +107,6 @@ export const uploadMenuImage = async (file: File): Promise<string> => {
 
   if (uploadError) throw uploadError;
 
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("menu-images").getPublicUrl(filePath);
+  const { data: { publicUrl } } = supabase.storage.from("menu-images").getPublicUrl(filePath);
   return publicUrl;
 };

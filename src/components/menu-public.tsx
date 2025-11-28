@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 import { logEvent } from "@/services/analytics-service";
 
-// ... (TRANSLATIONS tetap sama, tidak perlu diubah) ...
 const TRANSLATIONS = {
   id: {
     defaultTitle: "Bookletku Resto",
@@ -69,16 +68,17 @@ const TRANSLATIONS = {
   },
 };
 
+// Interface Props
 interface MenuPublicProps {
   initialMenus: MenuItem[];
   profile?: RestaurantProfile;
-  user?: User | null; // Tambahkan props user
+  user?: User | null;
 }
 
 export default function MenuPublic({
   initialMenus,
   profile,
-  user, // Terima props user
+  user,
 }: MenuPublicProps) {
   const [menus] = useState<MenuItem[]>(initialMenus);
   const router = useRouter();
@@ -248,7 +248,7 @@ export default function MenuPublic({
             {/* AUTH BUTTONS */}
             {user ? (
               <div className='flex items-center gap-2'>
-                {/* Tombol Dashboard (Opsional, jika ingin akses cepat ke admin) */}
+                {/* Tombol Dashboard */}
                 <Link href='/admin/dashboard'>
                   <button
                     className='hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full bg-zinc-100 hover:bg-zinc-200 text-xs font-bold transition-colors'
@@ -282,9 +282,9 @@ export default function MenuPublic({
         </div>
       </nav>
 
-      {/* MAIN LAYOUT (Sama seperti sebelumnya) */}
+      {/* MAIN LAYOUT */}
       <div className='max-w-7xl mx-auto flex flex-col lg:flex-row items-start pt-4 lg:pt-8 gap-8 px-4 sm:px-6 lg:px-8'>
-        {/* ... (Konten Menu tetap sama) ... */}
+        {/* ... (Konten Menu) ... */}
         <div className='flex-1 w-full min-h-[80vh] pb-32 lg:pb-10'>
           <div
             className={`sticky top-[72px] z-20 py-3 mb-6 -mx-4 px-4 lg:mx-0 lg:px-0 backdrop-blur-sm ${
@@ -408,7 +408,7 @@ export default function MenuPublic({
           )}
         </div>
 
-        {/* DESKTOP CART (Kode tetap sama) */}
+        {/* DESKTOP CART */}
         <div className='hidden lg:block w-96 flex-shrink-0 sticky top-24 z-10'>
           <div className='bg-white rounded-2xl shadow-xl shadow-zinc-200/50 border border-zinc-100 overflow-hidden flex flex-col max-h-[calc(100vh-120px)]'>
             <div className='p-5 border-b border-zinc-100 bg-white'>
@@ -511,7 +511,7 @@ export default function MenuPublic({
           </div>
         </div>
 
-        {/* MOBILE FLOATING CART & MODAL (Kode tetap sama) */}
+        {/* MOBILE FLOATING CART */}
         {totalItems > 0 && (
           <div className='lg:hidden fixed bottom-6 left-0 right-0 px-4 z-40 flex justify-center animate-in slide-in-from-bottom-10 fade-in duration-500'>
             <div className='w-full max-w-md'>
@@ -540,6 +540,7 @@ export default function MenuPublic({
           </div>
         )}
 
+        {/* MOBILE CART MODAL */}
         {isMobileCartOpen && (
           <div
             className='lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px] flex items-end justify-center animate-in fade-in duration-200'
@@ -612,4 +613,3 @@ export default function MenuPublic({
     </div>
   );
 }
-  

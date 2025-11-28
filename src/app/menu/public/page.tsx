@@ -19,7 +19,9 @@ export default async function PublicMenuPage() {
     .from("menu_items")
     .select("*")
     .eq("is_available", true)
-    .order("created_at", { ascending: false });
+    // [UPDATE] Prioritaskan urutan 'position' ascending (0, 1, 2...)
+    .order("position", { ascending: true })
+    .order("created_at", { ascending: false }); // Fallback
 
   if (menuError)
     console.error("❌ [Server] Error ambil menu:", menuError.message);
@@ -34,6 +36,7 @@ export default async function PublicMenuPage() {
     isAvailable: item.is_available,
     createdAt: new Date(item.created_at).getTime(),
     user_id: item.user_id,
+    position: item.position || 0, // [UPDATE] Mapping position
   }));
 
   // 3. Ambil Profil Toko
@@ -44,6 +47,7 @@ export default async function PublicMenuPage() {
   if (ownerId) {
     profileQuery = profileQuery.eq("id", ownerId);
   } else {
+    // Fallback jika belum ada menu (ambil profil terakhir update - logic lama)
     profileQuery = profileQuery.order("updated_at", { ascending: false });
   }
 

@@ -9,14 +9,22 @@ export default async function PublicMenuPage() {
 
   console.log("🔍 [Server] Sedang memuat halaman Menu Public...");
 
-  // 1. Ambil Data Menu
+  // 1. Cek Session User (Untuk tombol Login/Logout)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // 2. Ambil Data Menu
   const { data: menuData, error: menuError } = await supabase
     .from("menu_items")
     .select("*")
     .eq("is_available", true)
-    .order("created_at", { ascending: false });
+    // [UPDATE] Prioritaskan urutan 'position' ascending (0, 1, 2...)
+    .order("position", { ascending: true })
+    .order("created_at", { ascending: false }); // Fallback
 
-  if (menuError) console.error("❌ [Server] Error ambil menu:", menuError.message);
+  if (menuError)
+    console.error("❌ [Server] Error ambil menu:", menuError.message);
 
   const menus: MenuItem[] = (menuData || []).map((item: any) => ({
     id: item.id,
@@ -28,55 +36,24 @@ export default async function PublicMenuPage() {
     isAvailable: item.is_available,
     createdAt: new Date(item.created_at).getTime(),
     user_id: item.user_id,
+    position: item.position || 0, // [UPDATE] Mapping position
   }));
 
-  // 2. Logika Cerdas Mengambil Profil (Double Fallback)
+  // 3. Ambil Profil Toko
   let profile: RestaurantProfile | undefined;
-  
-  // Cari ID pemilik dari salah satu menu
   const ownerId = menus.find((m) => m.user_id)?.user_id;
-  
-  let profileData = null;
+  let profileQuery = supabase.from("profiles").select("*");
 
-  // PERCOBAAN 1: Cari profil berdasarkan ID pemilik menu
   if (ownerId) {
-    console.log("👤 [Server] Mencoba ambil profil milik user:", ownerId);
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", ownerId)
-      .limit(1)
-      .maybeSingle();
-    
-    if (data) {
-      profileData = data;
-      console.log("✅ [Server] Profil pemilik ditemukan.");
-    } else {
-      console.log("⚠️ [Server] Profil pemilik tidak ditemukan. Mencoba fallback...");
-    }
+    profileQuery = profileQuery.eq("id", ownerId);
+  } else {
+    // Fallback jika belum ada menu (ambil profil terakhir update - logic lama)
+    profileQuery = profileQuery.order("updated_at", { ascending: false });
   }
 
-  // PERCOBAAN 2 (Fallback): Jika profil pemilik tidak ketemu, ambil profil terakhir yang diupdate
-  // Ini berguna jika data menu tidak sinkron dengan data profil
-  if (!profileData) {
-    console.log("🔄 [Server] Mengambil profil toko terakhir (Fallback mode)...");
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-      
-    if (error) {
-      console.error("❌ [Server] Error fallback profil:", error.message);
-    }
-    profileData = data;
-  }
+  const { data: profileData } = await profileQuery.limit(1).maybeSingle();
 
-  // 3. Format Data Profil
   if (profileData) {
-    console.log("🎨 [Server] Menggunakan Tema:", profileData.theme);
-    
     profile = {
       id: profileData.id,
       restaurantName: profileData.restaurant_name,
@@ -86,9 +63,8 @@ export default async function PublicMenuPage() {
       logoUrl: profileData.logo_url,
       description: profileData.description,
     };
-  } else {
-    console.error("❌ [Server] FATAL: Tidak ada profil toko sama sekali di database.");
   }
 
-  return <MenuPublic initialMenus={menus} profile={profile} />;
+  // Kirim data 'user' ke komponen client
+  return <MenuPublic initialMenus={menus} profile={profile} user={user} />;
 }

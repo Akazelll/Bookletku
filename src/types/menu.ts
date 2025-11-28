@@ -8,6 +8,7 @@ export type MenuItem = {
   isAvailable: boolean;
   createdAt: number;
   user_id?: string;
+  position?: number;
 };
 
 export type RestaurantProfile = {

@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Utensils, Mail, Lock, Store, Loader2 } from "lucide-react";
+import { Utensils, Mail, Lock, Loader2 } from "lucide-react"; // Hapus Store karena tidak dipakai
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +21,7 @@ export default function RegisterPage() {
   const supabase = createClient();
 
   const [isLoading, setIsLoading] = React.useState(false);
-  const [restaurantName, setRestaurantName] = React.useState("");
+  // State restaurantName dihapus
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
 
@@ -38,17 +38,16 @@ export default function RegisterPage() {
 
       if (authError) throw authError;
 
-      // 2. Simpan Nama Restoran ke tabel 'profiles'
+      // 2. Simpan Profile dengan nama default
       if (authData.user) {
         const { error: profileError } = await supabase.from("profiles").upsert({
           id: authData.user.id,
-          restaurant_name: restaurantName,
+          restaurant_name: "Restoran Baru", // Default name
           updated_at: new Date().toISOString(),
         });
 
         if (profileError) {
-          console.error("Gagal menyimpan nama restoran:", profileError);
-          // Kita tidak throw error di sini agar user tetap terdaftar
+          console.error("Gagal membuat profil:", profileError);
         }
       }
 
@@ -63,7 +62,10 @@ export default function RegisterPage() {
 
   return (
     <div className='relative flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black p-4 overflow-hidden'>
-      {/* ... (Bagian ornamen background biarkan sama) ... */}
+      {/* Ornamen Background */}
+      <div className='absolute -top-20 -left-10 w-96 h-96 bg-white dark:bg-zinc-800 rounded-full filter blur-3xl opacity-40 dark:opacity-20'></div>
+      <div className='absolute bottom-0 -right-20 w-80 h-80 bg-zinc-200 dark:bg-zinc-700 rounded-full filter blur-3xl opacity-40 dark:opacity-20'></div>
+      <div className='absolute bottom-1/4 left-1/4 w-60 h-60 bg-blue-200 dark:bg-blue-900 rounded-full filter blur-3xl opacity-30 dark:opacity-10'></div>
 
       <Card className='z-10 w-full max-w-sm p-0 border-zinc-200 dark:border-zinc-800 shadow-xl backdrop-blur-md bg-white/80 dark:bg-black/80'>
         <CardHeader className='text-center border-b border-zinc-100 dark:border-zinc-800 pb-4'>
@@ -82,22 +84,7 @@ export default function RegisterPage() {
 
         <CardContent className='pt-6'>
           <form onSubmit={handleSubmit} className='space-y-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='restaurantName'>Nama Restoran</Label>
-              <div className='relative'>
-                <Store className='absolute left-3 top-2.5 h-4 w-4 text-zinc-400' />
-                <Input
-                  id='restaurantName'
-                  type='text'
-                  placeholder='Contoh: Restoran Enak Jaya'
-                  required
-                  className='pl-10'
-                  disabled={isLoading}
-                  value={restaurantName}
-                  onChange={(e) => setRestaurantName(e.target.value)}
-                />
-              </div>
-            </div>
+            {/* Input Nama Restoran DIHAPUS */}
 
             <div className='space-y-2'>
               <Label htmlFor='email'>Email</Label>

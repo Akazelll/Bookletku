@@ -1,69 +1,105 @@
-# Bookletku 📖 - Digital Menu & WhatsApp Ordering SaaS
+# Bookletku 📖 – Digital Menu & WhatsApp Ordering SaaS
+
+## 👥 Anggota Kelompok
+
+| Nama                           | NIM            |
+| ------------------------------ | -------------- |
+| **Adam Raga**                  | A11.2024.15598 |
+| **Affan Shahzada**             | A11.2024.15784 |
+| **Aiska Zahra Nailani**        | A11.2024.16014 |
+| **Nur Alif Maulana Syafrudin** | A11.2024.15936 |
 
 ![Project Status](https://img.shields.io/badge/Status-Active-success?style=flat-square)
-![Next.js](https://img.shields.io/badge/Next.js-16.0-black?style=flat-square&logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)
-![Supabase](https://img.shields.io/badge/Supabase-Database-green?style=flat-square&logo=supabase)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=flat-square&logo=tailwind-css)
+![Next.js](https://img.shields.io/badge/Next.js-16.0-black?style=flat-square\&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square\&logo=typescript)
+![Supabase](https://img.shields.io/badge/Supabase-Database-green?style=flat-square\&logo=supabase)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=flat-square\&logo=tailwind-css)
 
-**Bookletku** adalah platform *SaaS (Software as a Service)* modern yang memungkinkan pemilik restoran, kafe, atau UMKM kuliner untuk membuat **Menu Digital** interaktif dalam hitungan menit.
+**Bookletku** adalah platform *SaaS (Software as a Service)* modern yang membantu pemilik restoran, kafe, dan UMKM kuliner membuat **Menu Digital interaktif** dan memproses pesanan melalui **WhatsApp** dalam hitungan menit.
 
-Solusi ini menghilangkan kebutuhan akan buku menu fisik yang mahal dan mempermudah proses pemesanan melalui integrasi langsung ke WhatsApp.
+Bookletku menggantikan buku menu fisik yang mahal dan sulit di-update dengan solusi digital yang ringan, mobile-friendly, dan mudah dikustomisasi.
 
-## ✨ Fitur Unggulan
+---
+
+## 🔍 Fitur Utama
 
 ### 📱 Untuk Pelanggan (Public View)
-* **Tanpa Instalasi:** Akses menu langsung via Browser dengan scan QR Code.
-* **Mobile-First Design:** Tampilan responsif seperti aplikasi native.
-* **Real-time Search & Filter:** Pencarian menu dan filter kategori instan.
-* **Keranjang Belanja:** Menambah item, mengatur jumlah, dan melihat estimasi total.
-* **Checkout WhatsApp:** Pesanan otomatis terformat rapi dan terkirim ke WhatsApp kasir.
+
+* **Tanpa Instalasi Aplikasi** → Akses via browser, cukup **scan QR Code**.
+* **Mobile-First Design** → Tampilan responsif dan mirip aplikasi native.
+* **Real-time Search & Filter** → Cari menu berdasarkan nama/kategori secara instan.
+* **Keranjang Belanja (Cart)** → Tambah item, atur kuantitas, lihat estimasi total.
+* **Checkout via WhatsApp** → Pesanan otomatis diformat rapi dan dikirim ke nomor WA kasir.
 
 ### 👨‍🍳 Untuk Pemilik Restoran (Admin Dashboard)
-* **Dashboard Analitik:** Memantau total kunjungan, menu terpopuler, dan estimasi omset.
-* **Manajemen Menu (CRUD):** Tambah, edit, hapus menu, dan upload gambar dengan mudah.
-* **Drag & Drop Sorting:** Mengatur urutan menu sesuai keinginan.
-* **Manajemen Stok:** Toggle status "Ready" atau "Habis" dengan satu klik.
-* **QR Code Generator:** Cetak template kartu meja siap pakai langsung dari dashboard.
-* **Kustomisasi:** Ubah profil resto dan tema warna (Minimalist / Colorful).
 
-## 🛠️ Teknologi
+* **Dashboard Analitik** → Statistik kunjungan, menu terpopuler, dan estimasi omzet.
+* **Manajemen Menu (CRUD)** → Tambah, edit, hapus menu, lengkap dengan gambar.
+* **Drag & Drop Sorting** → Atur urutan tampilan menu dengan mudah.
+* **Manajemen Stok** → Toggle status *Ready* / *Habis* hanya dengan satu klik.
+* **QR Code Generator** → Generate & cetak kartu QR per meja langsung dari dashboard.
+* **Kustomisasi Tampilan** → Ubah profil resto dan tema warna (mis. `minimalist`, `colorful`).
 
-Project ini dibangun menggunakan stack teknologi terkini untuk performa maksimal:
+---
 
-* **Framework:** [Next.js 16](https://nextjs.org/) (App Router & Server Actions)
-* **Bahasa:** [TypeScript](https://www.typescriptlang.org/)
-* **Styling:** [Tailwind CSS v4](https://tailwindcss.com/) & [Shadcn/UI](https://ui.shadcn.com/)
-* **Database & Auth:** [Supabase](https://supabase.com/) (PostgreSQL)
-* **Charts:** MUI X Charts
-* **Utils:** `dnd-kit` (Drag & Drop), `qrcode.react`, `zod`
+## 🛠️ Tech Stack
 
-## 🚀 Cara Menjalankan (Local Development)
+* **Framework**: [Next.js 16](https://nextjs.org/) (App Router, Server Components, Server Actions)
+* **Bahasa**: [TypeScript](https://www.typescriptlang.org/)
+* **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/)
+* **Database & Auth**: [Supabase](https://supabase.com/) (PostgreSQL + Auth)
+* **Charts**: MUI X Charts
+* **Utilities**:
 
-Ikuti langkah-langkah berikut untuk menjalankan project di komputer lokal Anda:
+  * [`dnd-kit`](https://dndkit.com/) → Drag & Drop sorting menu
+  * [`qrcode.react`](https://github.com/zpao/qrcode.react) → Generate QR Code
+  * [`zod`](https://zod.dev/) → Validasi input & schema
+
+---
+
+## 🚀 Memulai Pengembangan (Local Development)
 
 ### 1. Prasyarat
-* Node.js (versi 20 atau lebih baru)
-* Akun Supabase
 
-### 2. Instalasi
-Clone repositori dan install dependencies:
+Pastikan di komputer Anda sudah terinstall:
+
+* **Node.js** v20 atau lebih baru
+* Akun **Supabase** (gratis sudah cukup untuk development)
+* Git (opsional tapi direkomendasikan)
+
+### 2. Clone Repositori & Install Dependencies
 
 ```bash
-git clone [https://github.com/username-anda/bookletku.git](https://github.com/username-anda/bookletku.git)
+# Clone repo
+git clone https://github.com/username-anda/bookletku.git
 cd bookletku
+
+# Install dependencies
 npm install
+```
 
-NEXT_PUBLIC_SUPABASE_URL=[https://project-id-anda.supabase.co](https://project-id-anda.supabase.co)
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJxh... (Anon Key Anda)
+### 3. Konfigurasi Environment (.env.local)
 
-4. Setup Database (Supabase)
-Jalankan query SQL berikut di SQL Editor Supabase Anda untuk membuat tabel yang diperlukan:
+Buat file `.env.local` di root project, lalu isi dengan kredensial Supabase Anda:
 
-<details> <summary>👉 Klik untuk melihat SQL Schema</summary>
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://project-id-anda.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
 
-SQL
+> **Catatan:**
+>
+> * Jangan pernah commit file `.env.local` ke GitHub (sudah di-ignore di `.gitignore`).
+> * Untuk tim, file `.env.local` sebaiknya dibagikan secara privat (WhatsApp/Discord).
 
+### 4. Setup Database (Supabase)
+
+Masuk ke dashboard Supabase → menu **SQL Editor**, lalu jalankan script berikut untuk membuat tabel yang dibutuhkan:
+
+<details>
+<summary><strong>👉 Klik untuk melihat SQL Schema</strong></summary>
+
+```sql
 -- 1. Tabel Profil Restoran
 create table profiles (
   id uuid references auth.users on delete cascade not null primary key,
@@ -99,94 +135,161 @@ create table analytics (
 );
 
 -- 4. Storage Buckets (Jangan lupa set policy public)
-insert into storage.buckets (id, name, public) values ('menu-images', 'menu-images', true);
-insert into storage.buckets (id, name, public) values ('logos', 'logos', true);
+insert into storage.buckets (id, name, public)
+values ('menu-images', 'menu-images', true)
+  on conflict (id) do nothing;
 
-5. Jalankan Server
-Bash
+insert into storage.buckets (id, name, public)
+values ('logos', 'logos', true)
+  on conflict (id) do nothing;
+```
 
+</details>
+
+> Setelah membuat bucket, pastikan **RLS / policy** untuk bucket `menu-images` dan `logos` sudah diatur agar file bisa diakses publik (read-only).
+
+### 5. Menjalankan Server
+
+```bash
 npm run dev
-Buka http://localhost:3000 di browser Anda.
+```
 
-📂 Struktur Project
+Buka `http://localhost:3000` di browser untuk mengakses aplikasi.
+
+---
+
+## 📂 Struktur Proyek (Ringkas)
+
+```bash
 bookletku/
 ├── src/
-│   ├── app/              # Next.js App Router (Pages & Layouts)
-│   ├── components/       # Reusable UI Components (Shadcn, dsb)
-│   ├── lib/              # Konfigurasi Supabase & Utils
-│   ├── services/         # Logic untuk fetch data (Menu, Settings, Analytics)
-│   └── types/            # Definisi Tipe TypeScript
-├── public/               # Aset statis
-└── ...
-🤝 Kontribusi
-Pull requests dipersilakan. Untuk perubahan besar, harap buka issue terlebih dahulu untuk mendiskusikan apa yang ingin Anda ubah.
-
-📄 Lisensi
-MIT
-
+│   ├── app/              # Next.js App Router (pages, layout, route handlers)
+│   ├── components/       # Reusable UI components (shadcn, layout, dsb)
+│   ├── lib/              # Supabase client, constants, helper functions
+│   ├── services/         # Logic fetch data (Menu, Profiles, Analytics)
+│   └── types/            # Definisi tipe TypeScript
+├── public/               # Static assets (ikon, images default)
+├── .env.local.example    # Contoh environment variables (opsional)
+└── ...                   # Config lain (tsconfig, next.config, dll)
+```
 
 ---
 
-### 2. TEAM_README.md (Dokumentasi Internal Kelompok)
-File ini khusus untuk anggota tim agar koordinasi lebih mudah. Letakkan ini di root folder juga.
+## 🤝 Kontribusi
 
-```markdown
-# 👋 Panduan Internal Tim Bookletku
+Pull request sangat terbuka! 🙌
 
-Halo Tim! Dokumen ini berisi panduan teknis, pembagian tugas, dan aturan main biar pengerjaan project **Bookletku** lancar sampai final.
+1. Fork repository ini
+2. Buat branch baru dari `main`:
 
-## 👥 Anggota Kelompok & Peran
+   ```bash
+   git checkout -b fitur/nama-fitur
+   ```
+3. Lakukan perubahan dan commit dengan pesan yang jelas
+4. Push branch dan buka Pull Request ke `main`
 
-| Nama | NIM |
-| :---  :--- |
-| **[Adam Raga]** | A11.2024.15598 |
-| **[Affan Shahzada]** | A11.2024.15784 |
-| **[Aiska Zahra Nailani]** | A11.2024.16014 |
-| **[Nur Alif Maulana Syafrudin]** | A11.2024.15936 |
-
-## 🔄 Alur Kerja Git (Wajib Baca!)
-
-Agar tidak bentrok kode (*merge conflict*), ikuti aturan ini:
-
-1.  **JANGAN coding di `main`**. Branch `main` hanya untuk kode yang sudah final dan siap demo.
-2.  **Buat Branch Baru:** Setiap mau ngerjain fitur, buat branch dari `main`:
-    * Format: `fitur/nama-fitur` atau `fix/nama-bug`
-    * Contoh: `fitur/login-page`, `fitur/keranjang-belanja`, `fix/sidebar-mobile`.
-    * Command: `git checkout -b fitur/halaman-menu`
-3.  **Commit Message:** Gunakan bahasa yang jelas.
-    * ✅ "Menambahkan fitur upload gambar menu"
-    * ❌ "update", "fix", "asdf"
-4.  **Pull Request (PR):** Kalau sudah selesai, push branch kamu dan buat PR ke `main`. Kabari di grup WA/Discord untuk di-review teman lain.
-
-## 🗄️ Database & Environment (PENTING)
-
-Kita menggunakan **Supabase** yang sama (Shared Project).
-
-1.  Minta file `.env.local` terbaru ke **[Nama 1 / Ketua]**.
-2.  Jangan pernah upload file `.env.local` ke GitHub! (Sudah di-ignore, tapi pastikan lagi).
-3.  Jika kamu mengubah struktur tabel database, **WAJIB** bilang di grup agar teman lain tidak error.
-
-## 🏃‍♂️ Setup Cepat
-
-1.  `npm install` (lakukan ini setiap kali ada yang update *package.json*)
-2.  `npm run dev`
-
-## 📝 Catatan Pengembangan
-
-### Todo List / Progress
-- [x] Setup Next.js & Tailwind
-- [x] Integrasi Supabase Auth (Login/Register)
-- [x] Admin Dashboard (Statistik)
-- [x] CRUD Menu (Create, Read, Update, Delete)
-- [x] Halaman Menu Public (Customer)
-- [x] Fitur Checkout WhatsApp
-- [ ] Dark Mode Sempurna (Masih ada bug di chart)
-- [ ] Print QR Code (Styling perlu dirapikan)
-
-### Masalah Umum (Troubleshooting)
-* **Error "Auth session missing":** Coba logout dan login ulang di `/login`. Atau hapus cookies di browser.
-* **Gambar tidak muncul:** Cek bucket Supabase, pastikan policy bucket sudah `public`.
-* **Error TypeScript:** Coba restart VS Code atau jalankan `Ctrl+Shift+P` -> `TypeScript: Restart TS Server`.
+Untuk perubahan besar, sebaiknya buat **issue** dulu untuk diskusi.
 
 ---
-*Semangat Tim! Mari kita selesaikan Bookletku! 🚀*
+
+## 📜 Lisensi
+
+Project ini dirilis dengan lisensi **MIT**. Silakan gunakan, modifikasi, dan kembangkan sesuai kebutuhan dengan tetap mempertahankan attribution.
+
+---
+
+## 👥 Tim & Workflow Internal
+
+> Bagian ini terutama untuk kebutuhan dokumentasi kelompok / mata kuliah. Bisa disembunyikan di fork publik jika diperlukan.
+
+### 👨‍👩‍👧‍👦 Anggota Kelompok
+
+| Nama                           | NIM            |
+| ------------------------------ | -------------- |
+| **Adam Raga**                  | A11.2024.15598 |
+| **Affan Shahzada**             | A11.2024.15784 |
+| **Aiska Zahra Nailani**        | A11.2024.16014 |
+| **Nur Alif Maulana Syafrudin** | A11.2024.15936 |
+
+### 🔄 Alur Kerja Git (Wajib Tim Ikuti)
+
+1. **Dilarang push langsung ke `main`**
+
+   * Branch `main` hanya untuk kode yang sudah stabil dan siap demo.
+2. **Buat branch baru saat mengerjakan fitur/bugfix**
+
+   * Format nama branch:
+
+     * `fitur/nama-fitur` → contoh: `fitur/login-page`, `fitur/keranjang-belanja`
+     * `fix/nama-bug` → contoh: `fix/sidebar-mobile`
+   * Command:
+
+     ```bash
+     git checkout -b fitur/halaman-menu
+     ```
+3. **Gunakan commit message yang jelas & deskriptif**
+
+   * ✅ `feat: menambahkan fitur upload gambar menu`
+   * ✅ `fix: perbaiki responsive sidebar di mobile`
+   * ❌ `update`, `fix`, `aaa`
+4. **Pull Request (PR)**
+
+   * Setelah selesai kerja di branch:
+
+     ```bash
+     git push origin fitur/halaman-menu
+     ```
+   * Buat PR ke `main` lewat GitHub.
+   * Share link PR di grup (WA/Discord) untuk di-review minimal 1 anggota tim lain.
+5. **Sinkron dengan `main` secara berkala**
+
+   * Sebelum mulai kerja:
+
+     ```bash
+     git checkout main
+     git pull origin main
+     git checkout fitur/branch-kamu
+     git merge main
+     ```
+
+### 🗄️ Catatan Environment & Database
+
+* Semua anggota tim menggunakan **Supabase project yang sama**.
+* Kalau ada perubahan skema database (tambah kolom/tabel):
+
+  * Update script SQL di dokumentasi
+  * Umumkan di grup agar semua tahu dan tidak terjadi error mendadak.
+
+### ✅ Todo List / Progress Internal
+
+* [v] Setup Next.js & Tailwind
+* [v] Integrasi Supabase Auth (Login / Register)
+* [v] Admin Dashboard (Statistik dasar)
+* [v] CRUD Menu (Create, Read, Update, Delete)
+* [v] Halaman Menu Public untuk Customer
+* [v] Fitur Checkout WhatsApp
+* [v] Dark Mode (perlu perbaikan di area chart)
+* [v] Styling Print QR Code (kartu meja)
+
+### 🧰 Troubleshooting Umum
+
+* **Error `Auth session missing`**
+
+  * Coba logout lalu login ulang di `/login`.
+  * Jika masih bermasalah, hapus cookies situs `localhost:3000` lalu refresh.
+
+* **Gambar tidak muncul**
+
+  * Cek di Supabase → Storage:
+
+    * Pastikan upload ke bucket yang benar (`menu-images` / `logos`).
+    * Pastikan bucket `public = true` dan policy RLS mengizinkan `SELECT` publik.
+
+* **Error TypeScript / tipe tidak terdeteksi**
+
+  * Restart VS Code.
+  * Jalankan perintah: `TypeScript: Restart TS Server` dari Command Palette.
+
+---
+
+*Selamat ngoding dan semangat menyelesaikan Bookletku! 🚀*

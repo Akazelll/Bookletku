@@ -12,7 +12,7 @@ const mapToMenuItem = (data: any): MenuItem => ({
   isAvailable: data.is_available,
   createdAt: new Date(data.created_at).getTime(),
   user_id: data.user_id,
-  position: data.position || 0, // [BARU] Map position
+  position: data.position || 0,
 });
 
 export const getMenus = async (): Promise<MenuItem[]> => {
@@ -20,14 +20,43 @@ export const getMenus = async (): Promise<MenuItem[]> => {
   const { data, error } = await supabase
     .from("menu_items")
     .select("*")
-    .order("position", { ascending: true }) // [UBAH] Urutkan berdasarkan posisi custom dulu
-    .order("created_at", { ascending: false }); // Fallback ke waktu buat
+    .order("position", { ascending: true })
+    .order("created_at", { ascending: false });
 
   if (error) {
     console.error("Error fetching menus:", error);
     return [];
   }
   return data.map(mapToMenuItem);
+};
+
+// [BARU] Fungsi Ambil Menu dengan Pagination
+export const getMenusPaginated = async (
+  page: number,
+  limit: number
+): Promise<{ data: MenuItem[]; count: number }> => {
+  const supabase = createClient();
+
+  // Hitung range (0-9, 10-19, dst)
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  const { data, count, error } = await supabase
+    .from("menu_items")
+    .select("*", { count: "exact" }) // Ambil total count juga
+    .order("position", { ascending: true })
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    console.error("Error fetching paginated menus:", error);
+    return { data: [], count: 0 };
+  }
+
+  return {
+    data: data.map(mapToMenuItem),
+    count: count || 0,
+  };
 };
 
 export const getMenuById = async (id: string): Promise<MenuItem | null> => {
@@ -84,7 +113,7 @@ export const updateMenu = async (id: string, updates: Partial<MenuItem>) => {
       category: updates.category,
       image_url: updates.imageUrl,
       is_available: updates.isAvailable,
-      position: updates.position, // [BARU] Izinkan update position
+      position: updates.position,
     })
     .eq("id", id)
     .select()
@@ -120,7 +149,6 @@ export const uploadMenuImage = async (file: File): Promise<string> => {
   return publicUrl;
 };
 
-// [BARU] Fungsi batch update urutan
 export const updateMenuOrder = async (
   items: { id: string; position: number }[]
 ) => {

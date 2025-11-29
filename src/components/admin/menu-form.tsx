@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Save, Loader2, ImagePlus, X } from "lucide-react";
 import {
   createMenu,
@@ -157,20 +164,24 @@ export default function MenuForm({
         </div>
         <div className='space-y-2'>
           <Label htmlFor='category'>Kategori</Label>
-          <select
-            id='category'
-            className='flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs ring-offset-background placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
+          {/* MENGGUNAKAN KOMPONEN SELECT DARI SHADCN (DARK MODE FRIENDLY) */}
+          <Select
             value={formData.category}
-            onChange={(e) =>
-              setFormData({ ...formData, category: e.target.value })
+            onValueChange={(value) =>
+              setFormData({ ...formData, category: value })
             }
           >
-            {CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger id='category' className='w-full'>
+              <SelectValue placeholder='Pilih Kategori' />
+            </SelectTrigger>
+            <SelectContent>
+              {CATEGORIES.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

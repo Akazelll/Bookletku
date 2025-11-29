@@ -18,31 +18,28 @@ import {
   LogIn,
   LogOut,
   LayoutDashboard,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  X,
 } from "lucide-react";
 import { logEvent } from "@/services/analytics-service";
+import { Input } from "@/components/ui/input";
 
-// --- 1. CONFIGURASI BAHASA LENGKAP ---
 const TRANSLATIONS = {
   id: {
-    // UI Dasar
     defaultTitle: "Bookletku Resto",
     defaultDesc: "Digital Menu",
     loading: "Memuat...",
     logoAlt: "Logo Restoran",
-
-    // Kategori & Pencarian
     all: "Semua",
-    searchPlaceholder: "Cari menu...",
-    emptyCategory: "Menu tidak ditemukan di kategori ini.",
-
-    // Kartu Menu
+    searchPlaceholder: "Mau makan apa hari ini?",
+    emptyCategory: "Menu tidak ditemukan.",
     noImage: "Tidak ada gambar",
     add: "Tambah",
     currency: "Rp",
     ready: "Tersedia",
     soldOut: "Habis",
-
-    // Keranjang & Checkout
     yourOrder: "Pesanan Anda",
     emptyCartTitle: "Keranjang kosong",
     emptyCartDesc: "Pilih menu enak di sebelah kiri!",
@@ -51,42 +48,30 @@ const TRANSLATIONS = {
     checkoutWA: "Pesan via WhatsApp",
     viewCart: "Lihat Keranjang",
     itemsSelected: "item terpilih",
-
-    // Pesan WhatsApp
     greeting: "Halo, saya mau pesan:",
     orderListHeader: "Daftar Pesanan:",
     pleaseProcess: "Mohon diproses ya, terima kasih!",
-
-    // Auth & Nav
     login: "Masuk",
     logout: "Keluar",
     dashboard: "Dashboard",
-
-    // Actions
     remove: "Hapus item",
     increase: "Tambah jumlah",
     decrease: "Kurangi jumlah",
+    page: "Halaman",
   },
   en: {
-    // Basic UI
     defaultTitle: "Bookletku Resto",
     defaultDesc: "Digital Menu",
     loading: "Loading...",
     logoAlt: "Restaurant Logo",
-
-    // Category & Search
     all: "All",
-    searchPlaceholder: "Search menu...",
-    emptyCategory: "No items found in this category.",
-
-    // Menu Card
+    searchPlaceholder: "What are you craving?",
+    emptyCategory: "No items found.",
     noImage: "No Image",
     add: "Add",
-    currency: "Rp", // Currency usually stays local, but can be changed if needed
+    currency: "Rp",
     ready: "Ready",
     soldOut: "Sold Out",
-
-    // Cart & Checkout
     yourOrder: "Your Order",
     emptyCartTitle: "Cart is empty",
     emptyCartDesc: "Pick some delicious items from the left!",
@@ -95,62 +80,61 @@ const TRANSLATIONS = {
     checkoutWA: "Order via WhatsApp",
     viewCart: "View Cart",
     itemsSelected: "items selected",
-
-    // WhatsApp Message
     greeting: "Hello, I would like to order:",
     orderListHeader: "Order List:",
     pleaseProcess: "Please process this order, thank you!",
-
-    // Auth & Nav
     login: "Login",
     logout: "Logout",
     dashboard: "Dashboard",
-
-    // Actions
     remove: "Remove item",
     increase: "Increase quantity",
     decrease: "Decrease quantity",
+    page: "Page",
   },
 };
 
-// --- 2. TERJEMAHAN KHUSUS KATEGORI ---
-// Pastikan key (sebelah kiri) SAMA PERSIS dengan yang ada di database/types
 const CATEGORY_NAMES: Record<string, { id: string; en: string }> = {
-  Makanan: { id: "Makanan", en: "Food" },
+  "Makanan Utama": { id: "Makanan Utama", en: "Main Course" },
   Minuman: { id: "Minuman", en: "Beverages" },
   Cemilan: { id: "Cemilan", en: "Snacks" },
+  Dessert: { id: "Pencuci Mulut", en: "Desserts" }, 
   "Paket Hemat": { id: "Paket Hemat", en: "Value Meals" },
-  // Tambahkan kategori lain jika ada
 };
 
-// Interface Props
 interface MenuPublicProps {
   initialMenus: MenuItem[];
   profile?: RestaurantProfile;
   user?: User | null;
+  currentPage: number;
+  totalPages: number;
+  currentCategory: string;
+  currentSearch: string;
 }
 
 export default function MenuPublic({
   initialMenus,
   profile,
   user,
+  currentPage,
+  totalPages,
+  currentCategory,
+  currentSearch,
 }: MenuPublicProps) {
-  const [menus] = useState<MenuItem[]>(initialMenus);
+  const menus = initialMenus;
   const router = useRouter();
   const supabase = createClient();
 
-  // State & Language
   const [lang, setLang] = useState<"id" | "en">("id");
-  const t = TRANSLATIONS[lang]; // Shortcut untuk akses teks
+  const t = TRANSLATIONS[lang];
 
-  const [selectedCategory, setSelectedCategory] = useState("all"); // Gunakan string key internal
   const [cart, setCart] = useState<{ [key: string]: number }>({});
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
-  // --- LOGIKA TEMA ---
+  const [searchTerm, setSearchTerm] = useState(currentSearch);
+
+  // Theme Logic
   const themeName = profile?.theme || "minimalist";
   const isColorful = themeName === "colorful";
-
   const storeName = profile?.restaurantName || t.defaultTitle;
   const storeDesc = profile?.description || t.defaultDesc;
   const waNumber = (profile?.whatsappNumber || "6281234567890")
@@ -159,17 +143,23 @@ export default function MenuPublic({
   const logoUrl = profile?.logoUrl;
 
   useEffect(() => {
-    // Reset kategori ke "All" saat ganti bahasa agar tidak bingung
-    setSelectedCategory("all");
-  }, [lang]);
+    if (searchTerm === currentSearch) return;
+
+    const timeoutId = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (currentCategory !== "all") params.set("category", currentCategory);
+      if (searchTerm) params.set("search", searchTerm);
+      params.set("page", "1");
+
+      router.push(`?${params.toString()}`);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, currentCategory, router, currentSearch]);
 
   useEffect(() => {
     logEvent("page_view");
   }, []);
-
-  const trackAddToCart = (item: MenuItem) => {
-    if (item.id) logEvent("add_to_cart", item.id);
-  };
 
   const updateCart = (item: MenuItem, delta: number) => {
     if (!item.id) return;
@@ -195,27 +185,24 @@ export default function MenuPublic({
     (total, item) => total + item.price * (cart[item.id!] || 0),
     0
   );
-  const cartItemsList = menus.filter((m) => m.id && cart[m.id]);
 
-  // --- LOGIKA PESAN WHATSAPP DINAMIS ---
   const handleCheckout = () => {
+    const cartItemsList = menus.filter((m) => m.id && cart[m.id]);
     if (cartItemsList.length === 0) return;
 
+    let message = `${t.greeting}\n\n`;
     cartItemsList.forEach((item) => {
       const qty = cart[item.id!];
-      for (let i = 0; i < qty; i++) trackAddToCart(item);
-    });
-
-    // Header Pesan
-    let message = `${t.greeting}\n\n`;
-    // Daftar Item
-    cartItemsList.forEach((item) => {
-      message += `- ${item.name} (${cart[item.id!]}) x ${
+      message += `- ${item.name} (${qty}) x ${
         t.currency
       } ${item.price.toLocaleString("id-ID")}\n`;
     });
-    // Footer Pesan (Total)
-    message += `\n*${t.total}: ${t.currency} ${totalPrice.toLocaleString(
+
+    const visibleTotal = cartItemsList.reduce(
+      (acc, item) => acc + item.price * cart[item.id!],
+      0
+    );
+    message += `\n*${t.total}: ${t.currency} ${visibleTotal.toLocaleString(
       "id-ID"
     )}*`;
     message += `\n\n${t.pleaseProcess}`;
@@ -226,18 +213,27 @@ export default function MenuPublic({
     );
   };
 
-  // Helper untuk menerjemahkan nama kategori
   const getCategoryLabel = (cat: string) => {
-    // Jika ada di mapping, ambil sesuai bahasa. Jika tidak, pakai nama aslinya.
     return CATEGORY_NAMES[cat] ? CATEGORY_NAMES[cat][lang] : cat;
   };
 
-  const filteredMenus =
-    selectedCategory === "all"
-      ? menus
-      : menus.filter((m) => m.category === selectedCategory);
+  const handleCategoryChange = (cat: string) => {
+    const params = new URLSearchParams();
+    if (cat !== "all") params.set("category", cat);
+    if (currentSearch) params.set("search", currentSearch);
+    params.set("page", "1");
+    router.push(`?${params.toString()}`);
+  };
 
-  // Style objects (Theme)
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams();
+    if (currentCategory !== "all") params.set("category", currentCategory);
+    if (currentSearch) params.set("search", currentSearch);
+    params.set("page", newPage.toString());
+    router.push(`?${params.toString()}`);
+  };
+
+  // Styles (Updated for better search UI)
   const theme = {
     pageBg: isColorful ? "bg-orange-50/60" : "bg-zinc-50",
     navBorder: isColorful ? "border-orange-100/50" : "border-zinc-200",
@@ -247,12 +243,24 @@ export default function MenuPublic({
     titleText: isColorful
       ? "text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600"
       : "text-zinc-900",
+
+    // Header (Sticky Background)
+    headerBg: isColorful ? "bg-orange-50/90" : "bg-zinc-50/95",
+
+    // Tabs
     activeTab: isColorful
       ? "bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg shadow-orange-500/30 border-transparent"
       : "bg-black text-white shadow-zinc-900/20 border-transparent",
     inactiveTab: isColorful
       ? "bg-white text-zinc-600 border-orange-100 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-700"
       : "bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-100",
+
+    // Search Bar Specifics [NEW]
+    searchInput: isColorful
+      ? "bg-white border-orange-100 focus-visible:ring-orange-400 placeholder:text-orange-300 text-orange-900 shadow-orange-100"
+      : "bg-white border-zinc-200 focus-visible:ring-zinc-400 placeholder:text-zinc-400 text-zinc-900 shadow-sm",
+    searchIcon: isColorful ? "text-orange-400" : "text-zinc-400",
+
     cardBorder: isColorful
       ? "border-orange-100/60 hover:border-orange-200 hover:shadow-xl hover:shadow-orange-500/10"
       : "border-zinc-100 hover:border-zinc-200 hover:shadow-xl hover:shadow-zinc-200/50",
@@ -312,36 +320,23 @@ export default function MenuPublic({
             </div>
           </div>
 
-          {/* KANAN NAVBAR: Language & Auth Buttons */}
           <div className='flex items-center gap-2 md:gap-3'>
             <button
               onClick={() => setLang(lang === "id" ? "en" : "id")}
               className='flex items-center gap-1 px-3 py-1.5 rounded-full bg-zinc-100/80 hover:bg-zinc-200 text-xs font-bold transition-colors border border-transparent hover:border-zinc-300'
-              title={
-                lang === "id"
-                  ? "Ganti ke Bahasa Inggris"
-                  : "Switch to Indonesian"
-              }
             >
               <Globe className='w-3.5 h-3.5' /> {lang.toUpperCase()}
             </button>
-
-            {/* AUTH BUTTONS */}
             {user ? (
               <div className='flex items-center gap-2'>
                 <Link href='/admin/dashboard'>
-                  <button
-                    className='hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full bg-zinc-100 hover:bg-zinc-200 text-xs font-bold transition-colors'
-                    title={t.dashboard}
-                  >
+                  <button className='hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full bg-zinc-100 hover:bg-zinc-200 text-xs font-bold transition-colors'>
                     <LayoutDashboard className='w-3.5 h-3.5' />
                   </button>
                 </Link>
-
                 <button
                   onClick={handleLogout}
                   className='flex items-center gap-1 px-3 py-1.5 rounded-full bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold transition-colors border border-red-100'
-                  title={t.logout}
                 >
                   <LogOut className='w-3.5 h-3.5' /> {t.logout}
                 </button>
@@ -363,25 +358,42 @@ export default function MenuPublic({
         </div>
       </nav>
 
-      {/* MAIN LAYOUT */}
       <div className='max-w-7xl mx-auto flex flex-col lg:flex-row items-start pt-4 lg:pt-8 gap-8 px-4 sm:px-6 lg:px-8'>
-        {/* ... (Konten Menu) ... */}
+        {/* MENU CONTENT */}
         <div className='flex-1 w-full min-h-[80vh] pb-32 lg:pb-10'>
-          {/* CATEGORY TABS */}
+          {/* SEARCH & CATEGORY HEADER (STICKY) */}
           <div
-            className={`sticky top-[72px] z-20 py-3 mb-6 -mx-4 px-4 lg:mx-0 lg:px-0 backdrop-blur-sm ${
-              isColorful ? "bg-orange-50/80" : "bg-zinc-50/95"
-            } lg:bg-transparent lg:backdrop-blur-none border-b ${
-              theme.navBorder
-            } lg:border-none`}
+            className={`sticky top-[64px] z-20 pt-4 pb-2 mb-4 -mx-4 px-4 lg:mx-0 lg:px-0 backdrop-blur-md transition-all duration-300 ${theme.headerBg} lg:bg-transparent lg:backdrop-blur-none border-b ${theme.navBorder} lg:border-none`}
           >
-            <div className='flex gap-2 overflow-x-auto no-scrollbar pb-1'>
+            {/* SEARCH INPUT */}
+            <div className='relative mb-4 max-w-md mx-auto lg:mx-0'>
+              <Search
+                className={`absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 ${theme.searchIcon}`}
+              />
+              <Input
+                placeholder={t.searchPlaceholder}
+                className={`pl-11 pr-10 h-11 rounded-2xl border transition-all duration-300 ${theme.searchInput}`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-black/5 transition-colors ${theme.searchIcon}`}
+                >
+                  <X className='h-4 w-4' />
+                </button>
+              )}
+            </div>
+
+            {/* CATEGORY TABS */}
+            <div className='flex gap-2 overflow-x-auto no-scrollbar pb-2 mask-linear-fade'>
               <button
-                onClick={() => setSelectedCategory("all")}
-                className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-semibold transition-all active:scale-95 ${
-                  selectedCategory === "all"
+                onClick={() => handleCategoryChange("all")}
+                className={`whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-semibold transition-all active:scale-95 border ${
+                  currentCategory === "all"
                     ? theme.activeTab
-                    : `${theme.inactiveTab} border`
+                    : theme.inactiveTab
                 }`}
               >
                 {t.all}
@@ -389,30 +401,38 @@ export default function MenuPublic({
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-semibold transition-all active:scale-95 ${
-                    selectedCategory === cat
+                  onClick={() => handleCategoryChange(cat)}
+                  className={`whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-semibold transition-all active:scale-95 border ${
+                    currentCategory === cat
                       ? theme.activeTab
-                      : `${theme.inactiveTab} border`
+                      : theme.inactiveTab
                   }`}
                 >
-                  {/* Panggil fungsi translate kategori */}
                   {getCategoryLabel(cat)}
                 </button>
               ))}
             </div>
           </div>
 
-          {filteredMenus.length === 0 ? (
+          {/* LIST MENU */}
+          {menus.length === 0 ? (
             <div className='text-center py-20 bg-white rounded-3xl border border-dashed border-zinc-200'>
               <div className='inline-flex p-4 bg-zinc-50 rounded-full mb-4 text-zinc-300'>
                 <ShoppingBag className='w-8 h-8' />
               </div>
               <p className='text-zinc-500 font-medium'>{t.emptyCategory}</p>
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className='mt-2 text-sm text-blue-600 hover:underline font-medium'
+                >
+                  Hapus pencarian
+                </button>
+              )}
             </div>
           ) : (
             <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6'>
-              {filteredMenus.map((menu) => (
+              {menus.map((menu) => (
                 <div
                   key={menu.id}
                   className={`group bg-white rounded-2xl border shadow-sm transition-all duration-300 overflow-hidden flex flex-row md:flex-col h-32 md:h-auto ${theme.cardBorder}`}
@@ -462,7 +482,6 @@ export default function MenuPublic({
                             <button
                               onClick={() => updateCart(menu, -1)}
                               className='w-8 h-8 flex items-center justify-center bg-white border border-zinc-200 rounded-full text-zinc-700 hover:bg-zinc-50 active:scale-90 transition-all'
-                              title={t.decrease}
                             >
                               <Minus className='w-3 h-3' />
                             </button>
@@ -472,7 +491,6 @@ export default function MenuPublic({
                             <button
                               onClick={() => updateCart(menu, 1)}
                               className={`flex items-center justify-center rounded-full shadow-sm transition-all active:scale-90 ${theme.counterBtn} w-8 h-8 text-white hover:opacity-90`}
-                              title={t.increase}
                             >
                               <Plus className='w-4 h-4' />
                             </button>
@@ -492,9 +510,32 @@ export default function MenuPublic({
               ))}
             </div>
           )}
+
+          {/* PAGINATION CONTROLS */}
+          {totalPages > 1 && (
+            <div className='flex items-center justify-center gap-4 mt-8 pt-6 border-t border-zinc-200/50'>
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage <= 1}
+                className='flex items-center gap-1 px-4 py-2 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-full hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all'
+              >
+                <ChevronLeft className='w-4 h-4' /> Prev
+              </button>
+              <span className='text-sm font-medium text-zinc-500'>
+                {t.page} {currentPage} / {totalPages}
+              </span>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= totalPages}
+                className='flex items-center gap-1 px-4 py-2 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-full hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all'
+              >
+                Next <ChevronRight className='w-4 h-4' />
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* DESKTOP CART */}
+        {/* CART SIDEBAR (DESKTOP) */}
         <div className='hidden lg:block w-96 flex-shrink-0 sticky top-24 z-10'>
           <div className='bg-white rounded-2xl shadow-xl shadow-zinc-200/50 border border-zinc-100 overflow-hidden flex flex-col max-h-[calc(100vh-120px)]'>
             <div className='p-5 border-b border-zinc-100 bg-white'>
@@ -504,7 +545,7 @@ export default function MenuPublic({
               </h2>
             </div>
             <div className='flex-1 overflow-y-auto p-5 space-y-5 scrollbar-thin scrollbar-thumb-zinc-200'>
-              {cartItemsList.length === 0 ? (
+              {Object.keys(cart).length === 0 ? (
                 <div className='py-12 flex flex-col items-center justify-center text-zinc-400 text-center space-y-3'>
                   <div className='w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center'>
                     <ShoppingBag className='w-8 h-8 opacity-30' />
@@ -517,65 +558,67 @@ export default function MenuPublic({
                   </div>
                 </div>
               ) : (
-                cartItemsList.map((item) => (
-                  <div key={item.id} className='flex gap-3 group'>
-                    <div className='w-14 h-14 bg-zinc-100 rounded-lg overflow-hidden flex-shrink-0 border border-zinc-100 relative'>
-                      {item.imageUrl && (
-                        <Image
-                          src={item.imageUrl}
-                          alt={item.name}
-                          fill
-                          sizes='56px'
-                          className='object-cover'
-                        />
-                      )}
-                    </div>
-                    <div className='flex-1 min-w-0'>
-                      <div className='flex justify-between items-start mb-1'>
-                        <h4 className='font-semibold text-sm text-zinc-900 line-clamp-1'>
-                          {item.name}
-                        </h4>
-                        <button
-                          onClick={() =>
-                            setCart((prev) => {
-                              const n = { ...prev };
-                              delete n[item.id!];
-                              return n;
-                            })
-                          }
-                          className='text-zinc-300 hover:text-red-500 transition-colors p-0.5'
-                          title={t.remove}
-                        >
-                          <Trash2 className='w-3.5 h-3.5' />
-                        </button>
+                menus
+                  .filter((m) => m.id && cart[m.id])
+                  .map((item) => (
+                    <div key={item.id} className='flex gap-3 group'>
+                      <div className='w-14 h-14 bg-zinc-100 rounded-lg overflow-hidden flex-shrink-0 border border-zinc-100 relative'>
+                        {item.imageUrl && (
+                          <Image
+                            src={item.imageUrl}
+                            alt={item.name}
+                            fill
+                            sizes='56px'
+                            className='object-cover'
+                          />
+                        )}
                       </div>
-                      <div className='flex justify-between items-end'>
-                        <p className='text-xs text-zinc-500'>
-                          @ {t.currency} {item.price.toLocaleString("id-ID")}
-                        </p>
-                        <div className='flex items-center gap-2 bg-zinc-50 rounded px-1.5 py-0.5 border border-zinc-100'>
+                      <div className='flex-1 min-w-0'>
+                        <div className='flex justify-between items-start mb-1'>
+                          <h4 className='font-semibold text-sm text-zinc-900 line-clamp-1'>
+                            {item.name}
+                          </h4>
                           <button
-                            onClick={() => updateCart(item, -1)}
-                            className='text-zinc-400 hover:text-zinc-700'
-                            title={t.decrease}
+                            onClick={() =>
+                              setCart((prev) => {
+                                const n = { ...prev };
+                                delete n[item.id!];
+                                return n;
+                              })
+                            }
+                            className='text-zinc-300 hover:text-red-500 transition-colors p-0.5'
+                            title={t.remove}
                           >
-                            <Minus className='w-3 h-3' />
+                            <Trash2 className='w-3.5 h-3.5' />
                           </button>
-                          <span className='text-xs font-bold w-4 text-center'>
-                            {cart[item.id!]}
-                          </span>
-                          <button
-                            onClick={() => updateCart(item, 1)}
-                            className='text-zinc-400 hover:text-zinc-700'
-                            title={t.increase}
-                          >
-                            <Plus className='w-3 h-3' />
-                          </button>
+                        </div>
+                        <div className='flex justify-between items-end'>
+                          <p className='text-xs text-zinc-500'>
+                            @ {t.currency} {item.price.toLocaleString("id-ID")}
+                          </p>
+                          <div className='flex items-center gap-2 bg-zinc-50 rounded px-1.5 py-0.5 border border-zinc-100'>
+                            <button
+                              onClick={() => updateCart(item, -1)}
+                              className='text-zinc-400 hover:text-zinc-700'
+                              title={t.decrease}
+                            >
+                              <Minus className='w-3 h-3' />
+                            </button>
+                            <span className='text-xs font-bold w-4 text-center'>
+                              {cart[item.id!]}
+                            </span>
+                            <button
+                              onClick={() => updateCart(item, 1)}
+                              className='text-zinc-400 hover:text-zinc-700'
+                              title={t.increase}
+                            >
+                              <Plus className='w-3 h-3' />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  ))
               )}
             </div>
             <div className='p-5 border-t border-zinc-100 bg-zinc-50 space-y-4'>
@@ -595,7 +638,7 @@ export default function MenuPublic({
               </div>
               <button
                 onClick={handleCheckout}
-                disabled={cartItemsList.length === 0}
+                disabled={Object.keys(cart).length === 0}
                 className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none ${theme.checkoutBtn}`}
               >
                 <Send className='w-4 h-4' /> {t.checkoutWA}
@@ -659,30 +702,32 @@ export default function MenuPublic({
                 </button>
               </div>
               <div className='flex-1 overflow-y-auto space-y-4 mb-6 pr-1 scrollbar-hide'>
-                {cartItemsList.map((item) => (
-                  <div
-                    key={item.id}
-                    className='flex justify-between items-center bg-zinc-50 p-3 rounded-2xl border border-zinc-100'
-                  >
-                    <div className='flex gap-4 items-center'>
-                      <div className='bg-white w-10 h-10 rounded-lg flex items-center justify-center font-bold text-zinc-900 border border-zinc-200 shadow-sm'>
-                        {cart[item.id!]}x
+                {menus
+                  .filter((m) => m.id && cart[m.id])
+                  .map((item) => (
+                    <div
+                      key={item.id}
+                      className='flex justify-between items-center bg-zinc-50 p-3 rounded-2xl border border-zinc-100'
+                    >
+                      <div className='flex gap-4 items-center'>
+                        <div className='bg-white w-10 h-10 rounded-lg flex items-center justify-center font-bold text-zinc-900 border border-zinc-200 shadow-sm'>
+                          {cart[item.id!]}x
+                        </div>
+                        <div>
+                          <div className='text-sm font-bold text-zinc-900 line-clamp-1'>
+                            {item.name}
+                          </div>
+                          <div className='text-xs text-zinc-500'>
+                            @ {t.currency} {item.price.toLocaleString("id-ID")}
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <div className='text-sm font-bold text-zinc-900 line-clamp-1'>
-                          {item.name}
-                        </div>
-                        <div className='text-xs text-zinc-500'>
-                          @ {t.currency} {item.price.toLocaleString("id-ID")}
-                        </div>
+                      <div className='font-bold text-zinc-900'>
+                        {t.currency}{" "}
+                        {(item.price * cart[item.id!]).toLocaleString("id-ID")}
                       </div>
                     </div>
-                    <div className='font-bold text-zinc-900'>
-                      {t.currency}{" "}
-                      {(item.price * cart[item.id!]).toLocaleString("id-ID")}
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
               <div className='border-t border-zinc-100 pt-4 mb-6 space-y-2'>
                 <div className='flex justify-between text-zinc-500 text-sm'>

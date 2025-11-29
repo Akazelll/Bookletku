@@ -1,11 +1,24 @@
-import { getMenus } from "@/services/menu-service"; // Pakai Mock service
+import { getMenusPaginated } from "@/services/menu-service";
 import MenuListWrapper from "@/components/admin/menu-list-wrapper";
-import CreateMenuDialog from "@/components/admin/create-menu-dialog"; // Import tombol dialog
+import CreateMenuDialog from "@/components/admin/create-menu-dialog";
 
 export const dynamic = "force-dynamic";
 
-export default async function MenuListPage() {
-  const menus = await getMenus();
+interface MenuListPageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function MenuListPage({
+  searchParams,
+}: MenuListPageProps) {
+  const resolvedParams = await searchParams;
+  const page = Number(resolvedParams?.page) || 1;
+
+  // [UBAH DI SINI] Ganti limit dari 10 menjadi 8
+  const limit = 8;
+
+  const { data: menus, count } = await getMenusPaginated(page, limit);
+  const totalPages = Math.max(1, Math.ceil(count / limit));
 
   return (
     <div className='max-w-6xl mx-auto space-y-8'>
@@ -19,13 +32,17 @@ export default async function MenuListPage() {
           </p>
         </div>
 
-        {/* TOMBOL TAMBAH MENU DISINI SEKARANG */}
         <CreateMenuDialog />
       </div>
 
       <div className='bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-1'>
         <div className='p-4 sm:p-6'>
-          <MenuListWrapper initialMenus={menus} />
+          <MenuListWrapper
+            initialMenus={menus}
+            currentPage={page}
+            totalPages={totalPages}
+            limit={limit}
+          />
         </div>
       </div>
     </div>

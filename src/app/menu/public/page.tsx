@@ -7,24 +7,20 @@ export const dynamic = "force-dynamic";
 export default async function PublicMenuPage() {
   const supabase = await createClient();
 
-  console.log("🔍 [Server] Sedang memuat halaman Menu Public...");
-
-  // 1. Cek Session User (Untuk tombol Login/Logout)
+  // 1. Ambil User Admin yang sedang login
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   // 2. Ambil Data Menu
-  const { data: menuData, error: menuError } = await supabase
+  // (Di preview admin, kita ambil semua menu yang available tanpa pagination)
+  const { data: menuData } = await supabase
     .from("menu_items")
     .select("*")
     .eq("is_available", true)
-    // [UPDATE] Prioritaskan urutan 'position' ascending (0, 1, 2...)
+    // Urutkan sesuai posisi agar sama dengan tampilan asli
     .order("position", { ascending: true })
-    .order("created_at", { ascending: false }); // Fallback
-
-  if (menuError)
-    console.error("❌ [Server] Error ambil menu:", menuError.message);
+    .order("created_at", { ascending: false });
 
   const menus: MenuItem[] = (menuData || []).map((item: any) => ({
     id: item.id,
@@ -36,35 +32,44 @@ export default async function PublicMenuPage() {
     isAvailable: item.is_available,
     createdAt: new Date(item.created_at).getTime(),
     user_id: item.user_id,
-    position: item.position || 0, // [UPDATE] Mapping position
+    position: item.position || 0,
   }));
 
-  // 3. Ambil Profil Toko
+  // 3. Ambil Profil Restoran milik Admin
   let profile: RestaurantProfile | undefined;
-  const ownerId = menus.find((m) => m.user_id)?.user_id;
-  let profileQuery = supabase.from("profiles").select("*");
 
-  if (ownerId) {
-    profileQuery = profileQuery.eq("id", ownerId);
-  } else {
-    // Fallback jika belum ada menu (ambil profil terakhir update - logic lama)
-    profileQuery = profileQuery.order("updated_at", { ascending: false });
+  if (user) {
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (profileData) {
+      profile = {
+        id: profileData.id,
+        restaurantName: profileData.restaurant_name,
+        whatsappNumber: profileData.whatsapp_number,
+        theme: profileData.theme || "minimalist",
+        slug: profileData.slug,
+        logoUrl: profileData.logo_url,
+        description: profileData.description,
+      };
+    }
   }
 
-  const { data: profileData } = await profileQuery.limit(1).maybeSingle();
-
-  if (profileData) {
-    profile = {
-      id: profileData.id,
-      restaurantName: profileData.restaurant_name,
-      whatsappNumber: profileData.whatsapp_number,
-      theme: profileData.theme || "minimalist",
-      slug: profileData.slug,
-      logoUrl: profileData.logo_url,
-      description: profileData.description,
-    };
-  }
-
-  // Kirim data 'user' ke komponen client
-  return <MenuPublic initialMenus={menus} profile={profile} user={user} />;
+  // 4. Render dengan props default (SOLUSI ERROR)
+  // Kita hardcode nilai pagination karena di preview admin tidak butuh fungsi pindah halaman
+  return (
+    <MenuPublic
+      initialMenus={menus}
+      profile={profile}
+      user={user}
+      // --- TAMBAHAN WAJIB AGAR BUILD BERHASIL ---
+      currentPage={1}
+      totalPages={1}
+      currentCategory='all'
+      currentSearch=''
+    />
+  );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useId } from "react";
+import { useRouter } from "next/navigation";
 import { MenuItem, CATEGORIES } from "@/types/menu";
 import { updateMenuOrder } from "@/services/menu-service";
 import { Button } from "@/components/ui/button";
@@ -32,10 +33,11 @@ import {
   Utensils,
   GripVertical,
   Save,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import UpdateMenuDialog from "./update-menu-dialog";
 
-// DND Kit Imports
 import {
   DndContext,
   closestCenter,
@@ -58,9 +60,12 @@ interface MenuListProps {
   menus: MenuItem[];
   onDelete: (id: string) => void;
   viewMode?: "dashboard" | "management";
+  currentPage?: number;
+  totalPages?: number;
+  limit?: number;
 }
 
-// --- Komponen Kartu Menu yang Bisa Digeser ---
+// --- SortableMenuCard Component ---
 function SortableMenuCard({
   menu,
   onDelete,
@@ -96,7 +101,6 @@ function SortableMenuCard({
         }`}
       >
         <div className='relative aspect-[4/3] bg-zinc-100 dark:bg-zinc-800 overflow-hidden'>
-          {/* Handle Drag (Icon Grip) */}
           {viewMode === "management" && (
             <div
               {...attributes}
@@ -190,17 +194,24 @@ function SortableMenuCard({
   );
 }
 
-// --- Komponen Utama MenuList ---
+// --- Main MenuList Component ---
 export default function MenuList({
   menus: initialMenus,
   onDelete,
   viewMode = "management",
+  currentPage = 1,
+  totalPages = 1,
+  limit = 8,
 }: MenuListProps) {
+  const router = useRouter();
   const [menus, setMenus] = useState(initialMenus);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [isOrderChanged, setIsOrderChanged] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // [Fix Hydration] Gunakan useId untuk DndContext
+  const dndContextId = useId();
 
   useEffect(() => {
     setMenus(initialMenus);
@@ -222,7 +233,6 @@ export default function MenuList({
     return matchesSearch && matchesCategory;
   });
 
-  // Fitur Sortable hanya aktif jika tidak ada filter (menampilkan semua)
   const isSortable =
     viewMode === "management" && categoryFilter === "all" && search === "";
 
@@ -234,7 +244,6 @@ export default function MenuList({
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
         const newOrder = arrayMove(items, oldIndex, newIndex);
-
         setIsOrderChanged(true);
         return newOrder;
       });
@@ -244,19 +253,25 @@ export default function MenuList({
   const saveOrder = async () => {
     setIsSaving(true);
     try {
+      const pageOffset = (currentPage - 1) * limit;
       const orderPayload = menus.map((menu, index) => ({
         id: menu.id!,
-        position: index,
+        position: pageOffset + index,
       }));
 
       await updateMenuOrder(orderPayload);
       setIsOrderChanged(false);
+      router.refresh();
     } catch (error) {
       console.error("Gagal menyimpan urutan:", error);
       alert("Gagal menyimpan urutan menu.");
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const goToPage = (page: number) => {
+    router.push(`?page=${page}`);
   };
 
   return (
@@ -295,7 +310,7 @@ export default function MenuList({
             </div>
           </div>
 
-          {/* Alert / Info jika Sortable aktif & ada perubahan */}
+          {/* Sortable Alert */}
           {isSortable && isOrderChanged && (
             <div className='flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 px-4 py-3 rounded-xl border border-blue-100 dark:border-blue-800 animate-in slide-in-from-top-2'>
               <p className='text-sm text-blue-700 dark:text-blue-300'>
@@ -318,24 +333,17 @@ export default function MenuList({
               </Button>
             </div>
           )}
-
-          {/* Hint jika filter aktif */}
-          {!isSortable && viewMode === "management" && (
-            <p className='text-xs text-zinc-400 px-2 italic'>
-              *Fitur geser urutan (drag-and-drop) hanya aktif saat menampilkan
-              "Semua Kategori" tanpa pencarian.
-            </p>
-          )}
         </div>
       )}
 
-      {/* CONTENT GRID */}
+      {/* Grid Content */}
       {filteredMenus.length === 0 ? (
         <div className='flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl bg-zinc-50/50'>
           <p className='text-sm text-zinc-500'>Belum ada menu yang sesuai.</p>
         </div>
       ) : (
         <DndContext
+          id={dndContextId}
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
@@ -357,6 +365,35 @@ export default function MenuList({
             </div>
           </SortableContext>
         </DndContext>
+      )}
+
+      {/* --- PAGINATION CONTROLS (ALWAYS VISIBLE in management mode) --- */}
+      {viewMode === "management" && (
+        <div className='flex items-center justify-center gap-4 pt-6 border-t border-zinc-100 dark:border-zinc-800'>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage <= 1}
+            className='w-24 bg-white dark:bg-zinc-900'
+          >
+            <ChevronLeft className='w-4 h-4 mr-1' /> Prev
+          </Button>
+
+          <span className='text-sm text-zinc-600 dark:text-zinc-400 font-medium'>
+            Halaman {currentPage} dari {totalPages || 1}
+          </span>
+
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+            className='w-24 bg-white dark:bg-zinc-900'
+          >
+            Next <ChevronRight className='w-4 h-4 ml-1' />
+          </Button>
+        </div>
       )}
     </div>
   );

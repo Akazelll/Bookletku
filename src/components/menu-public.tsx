@@ -423,8 +423,9 @@ export default function MenuPublic({
                         src={menu.imageUrl}
                         alt={menu.name}
                         fill
-                        sizes='56px'
+                        sizes='(max-width: 768px) 150px, (max-width: 1200px) 50vw, 33vw'
                         className='object-cover group-hover:scale-105 transition-transform duration-500'
+                        priority={false}
                       />
                     ) : (
                       <div className='w-full h-full flex flex-col items-center justify-center text-zinc-300'>

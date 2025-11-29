@@ -20,6 +20,7 @@ function PieCenterLabel({ children }: { children: React.ReactNode }) {
       <StyledText
         x={left + width / 2}
         y={top + height / 2 - 10}
+        // Menggunakan class Tailwind untuk SVG text di tengah
         className='fill-zinc-900 dark:fill-zinc-100 text-4xl font-extrabold'
         textAnchor='middle'
         dominantBaseline='central'
@@ -89,7 +90,7 @@ export function CategoryDistributionChart({ menus }: CategoryChartProps) {
   return (
     <div
       ref={containerRef}
-      className='w-full h-[350px] flex items-center justify-center text-zinc-900 dark:text-zinc-100'
+      className='w-full h-[350px] flex items-center justify-center'
     >
       <PieChart
         series={[
@@ -114,29 +115,36 @@ export function CategoryDistributionChart({ menus }: CategoryChartProps) {
         slotProps={{
           legend: {
             direction: isMobile ? "horizontal" : "vertical",
-            // PERBAIKAN:
-            // 1. Menggunakan 'center' dan 'end' untuk horizontal (bukan middle/right)
-            // 2. Menghapus properti 'padding' yang menyebabkan error
+            // PERBAIKAN: Hapus semua properti styling manual (labelStyle, markGap, dll)
+            // yang menyebabkan error pada elemen <ul>
             position: isMobile
               ? { vertical: "bottom", horizontal: "center" }
               : { vertical: "middle", horizontal: "end" },
           },
         }}
         sx={{
+          // --- FIX DARK MODE LEGEND ---
+          // Menggunakan selector class spesifik dari MUI Charts
           "& .MuiChartsLegend-label": {
-            fill: "currentColor !important",
+            // PENTING: Gunakan var(--foreground) agar sinkron dengan globals.css
+            color: "var(--foreground) !important", // Untuk legend HTML
+            fill: "var(--foreground) !important", // Untuk legend SVG (fallback)
             fontSize: "13px !important",
             fontWeight: 600,
           },
+
+          // --- FIX TOOLTIP AGAR SESUAI TEMA ---
           "& .MuiChartsTooltip-root": {
-            backgroundColor: "rgba(255, 255, 255, 0.95) !important",
-            border: "1px solid #e4e4e7 !important",
-            boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1) !important",
-            borderRadius: "12px !important",
+            // Gunakan variable background tema (putih di light, hitam di dark)
+            backgroundColor: "var(--background) !important",
+            border: "1px solid var(--border) !important",
+            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1) !important",
+            borderRadius: "8px !important",
             padding: "8px 12px !important",
           },
           "& .MuiChartsTooltip-table": {
-            color: "#18181b !important",
+            // Text tooltip mengikuti warna foreground tema
+            color: "var(--foreground) !important",
           },
           "& .MuiChartsTooltip-mark": {
             borderRadius: "4px !important",

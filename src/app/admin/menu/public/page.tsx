@@ -12,11 +12,12 @@ export default async function PublicMenuPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // 2. Ambil Data Menu
+  // 2. Ambil Data Menu (Ambil semua untuk preview admin, tanpa pagination nyata)
   const { data: menuData } = await supabase
     .from("menu_items")
     .select("*")
     .eq("is_available", true)
+    .order("position", { ascending: true })
     .order("created_at", { ascending: false });
 
   const menus: MenuItem[] = (menuData || []).map((item: any) => ({
@@ -29,10 +30,10 @@ export default async function PublicMenuPage() {
     isAvailable: item.is_available,
     createdAt: new Date(item.created_at).getTime(),
     user_id: item.user_id,
+    position: item.position || 0,
   }));
 
   // 3. Ambil Profil Restoran milik Admin
-  // PERBAIKAN: Gunakan 'undefined' sebagai default, bukan 'null'
   let profile: RestaurantProfile | undefined;
 
   if (user) {
@@ -55,6 +56,18 @@ export default async function PublicMenuPage() {
     }
   }
 
-  // 4. Render dengan data profile yang benar
-  return <MenuPublic initialMenus={menus} profile={profile} />;
+  // 4. Render dengan nilai default untuk props Pagination & Search
+  // (Props ini wajib ada karena komponen MenuPublic sudah diupdate)
+  return (
+    <MenuPublic
+      initialMenus={menus}
+      profile={profile}
+      user={user}
+      // --- NILAI DUMMY AGAR TIDAK ERROR ---
+      currentPage={1}
+      totalPages={1}
+      currentCategory='all'
+      currentSearch=''
+    />
+  );
 }

@@ -268,7 +268,7 @@ Project ini dirilis dengan lisensi **MIT**. Silakan gunakan, modifikasi, dan kem
 * [v] CRUD Menu (Create, Read, Update, Delete)
 * [v] Halaman Menu Public untuk Customer
 * [v] Fitur Checkout WhatsApp
-* [v] Dark Mode (perlu perbaikan di area chart)
+* [v] Dark Mode (merata)
 * [v] Styling Print QR Code (kartu meja)
 
 ### 🧰 Troubleshooting Umum

@@ -21,15 +21,28 @@ import {
 } from "lucide-react";
 import { logEvent } from "@/services/analytics-service";
 
+// --- 1. CONFIGURASI BAHASA LENGKAP ---
 const TRANSLATIONS = {
   id: {
+    // UI Dasar
     defaultTitle: "Bookletku Resto",
     defaultDesc: "Digital Menu",
-    openHours: "Buka Setiap Hari: 10:00 - 22:00",
+    loading: "Memuat...",
+    logoAlt: "Logo Restoran",
+
+    // Kategori & Pencarian
     all: "Semua",
+    searchPlaceholder: "Cari menu...",
     emptyCategory: "Menu tidak ditemukan di kategori ini.",
-    noImage: "No Image",
+
+    // Kartu Menu
+    noImage: "Tidak ada gambar",
     add: "Tambah",
+    currency: "Rp",
+    ready: "Tersedia",
+    soldOut: "Habis",
+
+    // Keranjang & Checkout
     yourOrder: "Pesanan Anda",
     emptyCartTitle: "Keranjang kosong",
     emptyCartDesc: "Pilih menu enak di sebelah kiri!",
@@ -38,20 +51,42 @@ const TRANSLATIONS = {
     checkoutWA: "Pesan via WhatsApp",
     viewCart: "Lihat Keranjang",
     itemsSelected: "item terpilih",
+
+    // Pesan WhatsApp
     greeting: "Halo, saya mau pesan:",
-    pleaseProcess: "Mohon diproses ya!",
+    orderListHeader: "Daftar Pesanan:",
+    pleaseProcess: "Mohon diproses ya, terima kasih!",
+
+    // Auth & Nav
     login: "Masuk",
     logout: "Keluar",
     dashboard: "Dashboard",
+
+    // Actions
+    remove: "Hapus item",
+    increase: "Tambah jumlah",
+    decrease: "Kurangi jumlah",
   },
   en: {
+    // Basic UI
     defaultTitle: "Bookletku Resto",
     defaultDesc: "Digital Menu",
-    openHours: "Open Daily: 10:00 AM - 10:00 PM",
+    loading: "Loading...",
+    logoAlt: "Restaurant Logo",
+
+    // Category & Search
     all: "All",
+    searchPlaceholder: "Search menu...",
     emptyCategory: "No items found in this category.",
+
+    // Menu Card
     noImage: "No Image",
     add: "Add",
+    currency: "Rp", // Currency usually stays local, but can be changed if needed
+    ready: "Ready",
+    soldOut: "Sold Out",
+
+    // Cart & Checkout
     yourOrder: "Your Order",
     emptyCartTitle: "Cart is empty",
     emptyCartDesc: "Pick some delicious items from the left!",
@@ -60,12 +95,32 @@ const TRANSLATIONS = {
     checkoutWA: "Order via WhatsApp",
     viewCart: "View Cart",
     itemsSelected: "items selected",
+
+    // WhatsApp Message
     greeting: "Hello, I would like to order:",
-    pleaseProcess: "Please process this order!",
+    orderListHeader: "Order List:",
+    pleaseProcess: "Please process this order, thank you!",
+
+    // Auth & Nav
     login: "Login",
     logout: "Logout",
     dashboard: "Dashboard",
+
+    // Actions
+    remove: "Remove item",
+    increase: "Increase quantity",
+    decrease: "Decrease quantity",
   },
+};
+
+// --- 2. TERJEMAHAN KHUSUS KATEGORI ---
+// Pastikan key (sebelah kiri) SAMA PERSIS dengan yang ada di database/types
+const CATEGORY_NAMES: Record<string, { id: string; en: string }> = {
+  Makanan: { id: "Makanan", en: "Food" },
+  Minuman: { id: "Minuman", en: "Beverages" },
+  Cemilan: { id: "Cemilan", en: "Snacks" },
+  "Paket Hemat": { id: "Paket Hemat", en: "Value Meals" },
+  // Tambahkan kategori lain jika ada
 };
 
 // Interface Props
@@ -86,9 +141,9 @@ export default function MenuPublic({
 
   // State & Language
   const [lang, setLang] = useState<"id" | "en">("id");
-  const t = TRANSLATIONS[lang];
+  const t = TRANSLATIONS[lang]; // Shortcut untuk akses teks
 
-  const [selectedCategory, setSelectedCategory] = useState(t.all);
+  const [selectedCategory, setSelectedCategory] = useState("all"); // Gunakan string key internal
   const [cart, setCart] = useState<{ [key: string]: number }>({});
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
@@ -104,8 +159,10 @@ export default function MenuPublic({
   const logoUrl = profile?.logoUrl;
 
   useEffect(() => {
-    setSelectedCategory(t.all);
-  }, [lang, t.all]);
+    // Reset kategori ke "All" saat ganti bahasa agar tidak bingung
+    setSelectedCategory("all");
+  }, [lang]);
+
   useEffect(() => {
     logEvent("page_view");
   }, []);
@@ -130,7 +187,7 @@ export default function MenuPublic({
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.refresh(); // Refresh agar status user terupdate
+    router.refresh();
   };
 
   const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
@@ -140,33 +197,47 @@ export default function MenuPublic({
   );
   const cartItemsList = menus.filter((m) => m.id && cart[m.id]);
 
+  // --- LOGIKA PESAN WHATSAPP DINAMIS ---
   const handleCheckout = () => {
     if (cartItemsList.length === 0) return;
-    // Track analytics per item quantity
+
     cartItemsList.forEach((item) => {
       const qty = cart[item.id!];
       for (let i = 0; i < qty; i++) trackAddToCart(item);
     });
 
+    // Header Pesan
     let message = `${t.greeting}\n\n`;
+    // Daftar Item
     cartItemsList.forEach((item) => {
-      message += `- ${item.name} (${
-        cart[item.id!]
-      }) x Rp${item.price.toLocaleString("id-ID")}\n`;
+      message += `- ${item.name} (${cart[item.id!]}) x ${
+        t.currency
+      } ${item.price.toLocaleString("id-ID")}\n`;
     });
-    message += `\n*${t.total}: Rp ${totalPrice.toLocaleString("id-ID")}*`;
+    // Footer Pesan (Total)
+    message += `\n*${t.total}: ${t.currency} ${totalPrice.toLocaleString(
+      "id-ID"
+    )}*`;
     message += `\n\n${t.pleaseProcess}`;
+
     window.open(
       `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`,
       "_blank"
     );
   };
 
+  // Helper untuk menerjemahkan nama kategori
+  const getCategoryLabel = (cat: string) => {
+    // Jika ada di mapping, ambil sesuai bahasa. Jika tidak, pakai nama aslinya.
+    return CATEGORY_NAMES[cat] ? CATEGORY_NAMES[cat][lang] : cat;
+  };
+
   const filteredMenus =
-    selectedCategory === t.all
+    selectedCategory === "all"
       ? menus
       : menus.filter((m) => m.category === selectedCategory);
 
+  // Style objects (Theme)
   const theme = {
     pageBg: isColorful ? "bg-orange-50/60" : "bg-zinc-50",
     navBorder: isColorful ? "border-orange-100/50" : "border-zinc-200",
@@ -215,7 +286,12 @@ export default function MenuPublic({
           <div className='flex items-center gap-3'>
             {logoUrl ? (
               <div className='w-10 h-10 relative rounded-xl overflow-hidden shadow-sm border border-zinc-100'>
-                <Image src={logoUrl} alt='Logo' fill className='object-cover' />
+                <Image
+                  src={logoUrl}
+                  alt={t.logoAlt}
+                  fill
+                  className='object-cover'
+                />
               </div>
             ) : (
               <div
@@ -241,6 +317,11 @@ export default function MenuPublic({
             <button
               onClick={() => setLang(lang === "id" ? "en" : "id")}
               className='flex items-center gap-1 px-3 py-1.5 rounded-full bg-zinc-100/80 hover:bg-zinc-200 text-xs font-bold transition-colors border border-transparent hover:border-zinc-300'
+              title={
+                lang === "id"
+                  ? "Ganti ke Bahasa Inggris"
+                  : "Switch to Indonesian"
+              }
             >
               <Globe className='w-3.5 h-3.5' /> {lang.toUpperCase()}
             </button>
@@ -248,7 +329,6 @@ export default function MenuPublic({
             {/* AUTH BUTTONS */}
             {user ? (
               <div className='flex items-center gap-2'>
-                {/* Tombol Dashboard */}
                 <Link href='/admin/dashboard'>
                   <button
                     className='hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full bg-zinc-100 hover:bg-zinc-200 text-xs font-bold transition-colors'
@@ -261,6 +341,7 @@ export default function MenuPublic({
                 <button
                   onClick={handleLogout}
                   className='flex items-center gap-1 px-3 py-1.5 rounded-full bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold transition-colors border border-red-100'
+                  title={t.logout}
                 >
                   <LogOut className='w-3.5 h-3.5' /> {t.logout}
                 </button>
@@ -286,6 +367,7 @@ export default function MenuPublic({
       <div className='max-w-7xl mx-auto flex flex-col lg:flex-row items-start pt-4 lg:pt-8 gap-8 px-4 sm:px-6 lg:px-8'>
         {/* ... (Konten Menu) ... */}
         <div className='flex-1 w-full min-h-[80vh] pb-32 lg:pb-10'>
+          {/* CATEGORY TABS */}
           <div
             className={`sticky top-[72px] z-20 py-3 mb-6 -mx-4 px-4 lg:mx-0 lg:px-0 backdrop-blur-sm ${
               isColorful ? "bg-orange-50/80" : "bg-zinc-50/95"
@@ -295,9 +377,9 @@ export default function MenuPublic({
           >
             <div className='flex gap-2 overflow-x-auto no-scrollbar pb-1'>
               <button
-                onClick={() => setSelectedCategory(t.all)}
+                onClick={() => setSelectedCategory("all")}
                 className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-semibold transition-all active:scale-95 ${
-                  selectedCategory === t.all
+                  selectedCategory === "all"
                     ? theme.activeTab
                     : `${theme.inactiveTab} border`
                 }`}
@@ -314,7 +396,8 @@ export default function MenuPublic({
                       : `${theme.inactiveTab} border`
                   }`}
                 >
-                  {cat}
+                  {/* Panggil fungsi translate kategori */}
+                  {getCategoryLabel(cat)}
                 </button>
               ))}
             </div>
@@ -370,7 +453,7 @@ export default function MenuPublic({
                       <span
                         className={`font-bold text-base ${theme.priceText}`}
                       >
-                        Rp {menu.price.toLocaleString("id-ID")}
+                        {t.currency} {menu.price.toLocaleString("id-ID")}
                       </span>
                       <div className='flex items-center gap-2'>
                         {cart[menu.id!] ? (
@@ -378,6 +461,7 @@ export default function MenuPublic({
                             <button
                               onClick={() => updateCart(menu, -1)}
                               className='w-8 h-8 flex items-center justify-center bg-white border border-zinc-200 rounded-full text-zinc-700 hover:bg-zinc-50 active:scale-90 transition-all'
+                              title={t.decrease}
                             >
                               <Minus className='w-3 h-3' />
                             </button>
@@ -387,6 +471,7 @@ export default function MenuPublic({
                             <button
                               onClick={() => updateCart(menu, 1)}
                               className={`flex items-center justify-center rounded-full shadow-sm transition-all active:scale-90 ${theme.counterBtn} w-8 h-8 text-white hover:opacity-90`}
+                              title={t.increase}
                             >
                               <Plus className='w-4 h-4' />
                             </button>
@@ -458,18 +543,20 @@ export default function MenuPublic({
                             })
                           }
                           className='text-zinc-300 hover:text-red-500 transition-colors p-0.5'
+                          title={t.remove}
                         >
                           <Trash2 className='w-3.5 h-3.5' />
                         </button>
                       </div>
                       <div className='flex justify-between items-end'>
                         <p className='text-xs text-zinc-500'>
-                          @ Rp{item.price.toLocaleString("id-ID")}
+                          @ {t.currency} {item.price.toLocaleString("id-ID")}
                         </p>
                         <div className='flex items-center gap-2 bg-zinc-50 rounded px-1.5 py-0.5 border border-zinc-100'>
                           <button
                             onClick={() => updateCart(item, -1)}
                             className='text-zinc-400 hover:text-zinc-700'
+                            title={t.decrease}
                           >
                             <Minus className='w-3 h-3' />
                           </button>
@@ -479,6 +566,7 @@ export default function MenuPublic({
                           <button
                             onClick={() => updateCart(item, 1)}
                             className='text-zinc-400 hover:text-zinc-700'
+                            title={t.increase}
                           >
                             <Plus className='w-3 h-3' />
                           </button>
@@ -493,11 +581,15 @@ export default function MenuPublic({
               <div className='space-y-2'>
                 <div className='flex justify-between text-sm text-zinc-500'>
                   <span>{t.subtotal}</span>
-                  <span>Rp {totalPrice.toLocaleString("id-ID")}</span>
+                  <span>
+                    {t.currency} {totalPrice.toLocaleString("id-ID")}
+                  </span>
                 </div>
                 <div className='flex justify-between text-xl font-bold text-zinc-900 pt-2 border-t border-zinc-200/50'>
                   <span>{t.total}</span>
-                  <span>Rp {totalPrice.toLocaleString("id-ID")}</span>
+                  <span>
+                    {t.currency} {totalPrice.toLocaleString("id-ID")}
+                  </span>
                 </div>
               </div>
               <button
@@ -532,7 +624,7 @@ export default function MenuPublic({
                 </div>
                 <div className='text-right'>
                   <span className='block font-bold text-base'>
-                    Rp {totalPrice.toLocaleString("id-ID")}
+                    {t.currency} {totalPrice.toLocaleString("id-ID")}
                   </span>
                 </div>
               </button>
@@ -580,12 +672,13 @@ export default function MenuPublic({
                           {item.name}
                         </div>
                         <div className='text-xs text-zinc-500'>
-                          @ Rp{item.price.toLocaleString("id-ID")}
+                          @ {t.currency} {item.price.toLocaleString("id-ID")}
                         </div>
                       </div>
                     </div>
                     <div className='font-bold text-zinc-900'>
-                      Rp{(item.price * cart[item.id!]).toLocaleString("id-ID")}
+                      {t.currency}{" "}
+                      {(item.price * cart[item.id!]).toLocaleString("id-ID")}
                     </div>
                   </div>
                 ))}
@@ -593,11 +686,15 @@ export default function MenuPublic({
               <div className='border-t border-zinc-100 pt-4 mb-6 space-y-2'>
                 <div className='flex justify-between text-zinc-500 text-sm'>
                   <span>{t.subtotal}</span>
-                  <span>Rp {totalPrice.toLocaleString("id-ID")}</span>
+                  <span>
+                    {t.currency} {totalPrice.toLocaleString("id-ID")}
+                  </span>
                 </div>
                 <div className='flex justify-between text-2xl font-bold text-zinc-900'>
                   <span>{t.total}</span>
-                  <span>Rp {totalPrice.toLocaleString("id-ID")}</span>
+                  <span>
+                    {t.currency} {totalPrice.toLocaleString("id-ID")}
+                  </span>
                 </div>
               </div>
               <button
